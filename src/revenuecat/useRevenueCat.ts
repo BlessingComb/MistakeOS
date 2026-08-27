@@ -1,0 +1,1 @@
+export { useRevenueCat } from './RevenueCatProvider';

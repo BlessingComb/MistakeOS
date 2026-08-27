@@ -3,20 +3,50 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "expo": "~57.0.15",
+    "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
+    "@expo-google-fonts/nunito": "^0.4.2",
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "2.112.4",
+    "expo": "~57.0.17",
+    "expo-dev-client": "~57.0.16",
+    "expo-file-system": "~57.0.6",
+    "expo-font": "~57.0.1",
+    "expo-haptics": "~57.0.2",
+    "expo-image-picker": "~57.0.14",
+    "expo-linear-gradient": "~57.0.1",
+    "expo-localization": "~57.0.1",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
-    "react-native": "0.86.2"
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-foonto": "^0.2.2",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-purchases": "^10.7.2",
+    "react-native-purchases-ui": "^10.7.2",
+    "react-native-reanimated": "4.5.1",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "^0.21.2",
+    "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "@types/react": "~19.2.2",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.2",
+    "tsx": "^4.23.12",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "lint": "expo lint",
+    "test": "tsx --test src/i18n/core.test.ts src/onboarding/core.test.ts src/entitlements/core.test.ts src/mistakes/core.test.ts src/mistakes/storage.test.ts src/mistakes/photoStorage.web.test.ts src/exams/core.test.ts src/prepMap/core.test.ts src/recovery/core.test.ts src/social/core.test.ts src/motion/core.test.ts src/analysis/core.test.ts src/analysis/client.test.ts src/analysis/edgeCore.test.ts src/repositories/repositories.test.ts server/groq.test.ts src/revenuecat/core.test.ts src/revenuecat/service.test.ts src/theme/core.test.ts src/supabase/config.test.ts src/supabase/socialMigration.test.ts",
+    "typecheck": "tsc --noEmit",
+    "build:web": "expo export --platform web",
+    "server:analysis": "tsx --env-file-if-exists=.env server/dev.ts"
   },
   "private": true
 }
