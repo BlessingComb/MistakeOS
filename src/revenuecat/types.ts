@@ -44,6 +44,8 @@ export type RevenueCatPurchaseResult = {
 export interface RevenueCatClient {
   readonly availability: 'native' | 'web';
   configure(config: RevenueCatResolvedConfig): Promise<void>;
+  logIn?(appUserId: string): Promise<void>;
+  logOut?(): Promise<void>;
   getCustomerInfo(): Promise<RevenueCatCustomerInfo>;
   getCurrentOffering(): Promise<RevenueCatOffering | null>;
   purchasePackage(aPackage: RevenueCatPackage): Promise<RevenueCatPurchaseResult>;

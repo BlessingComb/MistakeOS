@@ -1,0 +1,78 @@
+{
+  "psc1_skills": 313,
+  "psc3_skills": 285,
+  "enem_curriculum_skills": 378,
+  "enem_framework": {
+    "cognitive_axes": 5,
+    "areas": 4,
+    "objective_competencies": 30,
+    "abilities": 120,
+    "object_groups": 41,
+    "knowledge_objects": 379,
+    "essay_competencies": 5
+  },
+  "reused_from_psc2": 3,
+  "reused_from_any_prior_catalog": 4,
+  "reuse_details": [
+    {
+      "catalog": "PSC 1",
+      "code": "literature.portuguese-indigenous-african-latin-american",
+      "label": "Literatura portuguesa, indígena, africana e latino-americana",
+      "reused_from": "PSC 2"
+    },
+    {
+      "catalog": "ENEM",
+      "code": "mathematics.plano-cartesiano",
+      "label": "Plano cartesiano",
+      "reused_from": "PSC 1"
+    },
+    {
+      "catalog": "ENEM",
+      "code": "physics.thermometric-scales",
+      "label": "Escalas termométricas",
+      "reused_from": "PSC 2"
+    },
+    {
+      "catalog": "ENEM",
+      "code": "biology.biogeochemical-cycles",
+      "label": "Ciclos biogeoquímicos",
+      "reused_from": "PSC 2"
+    }
+  ],
+  "new_canonical_skills": 972,
+  "classifications": {
+    "POSSIBLE DUPLICATE": 1,
+    "REVIEW RECOMMENDED": 59,
+    "SAFE": 915,
+    "SOURCE AMBIGUITY": 1
+  },
+  "distribution": {
+    "PSC 1": {
+      "Biologia": 53,
+      "Física": 19,
+      "Geografia": 106,
+      "História": 46,
+      "Língua Portuguesa e Literatura": 31,
+      "Matemática": 18,
+      "Química": 40
+    },
+    "PSC 3": {
+      "Biologia": 39,
+      "Física": 36,
+      "Geografia": 101,
+      "História": 43,
+      "Língua Estrangeira": 1,
+      "Língua Portuguesa e Literatura": 24,
+      "Matemática": 15,
+      "Química": 26
+    },
+    "ENEM": {
+      "Biologia": 70,
+      "Ciências Humanas e suas Tecnologias": 54,
+      "Física": 86,
+      "Linguagens, Códigos e suas Tecnologias": 40,
+      "Matemática": 25,
+      "Química": 103
+    }
+  }
+}

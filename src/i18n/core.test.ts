@@ -65,17 +65,19 @@ test('English and Portuguese catalogs have the same complete key set', () => {
   }
 });
 
-test('essential translations and product feature names are preserved', () => {
+test('essential translations and localized product feature names render correctly', () => {
   assert.equal(translate('en', 'home.headline'), 'Your risk has a pattern.');
   assert.equal(translate('pt-BR', 'home.headline'), 'Seu risco tem um padrão.');
   assert.equal(translate('en', 'dna.title'), 'Mistake DNA');
-  assert.equal(translate('pt-BR', 'dna.title'), 'Mistake DNA');
+  assert.equal(translate('pt-BR', 'dna.title'), 'DNA dos Erros');
   assert.equal(translate('en', 'prepMap.title'), 'Exam Prep Map');
-  assert.equal(translate('pt-BR', 'prepMap.title'), 'Mapa de Preparação');
+  assert.equal(translate('pt-BR', 'prepMap.title'), 'Preparação para Provas');
+  assert.equal(translate('en', 'officialPrep.insufficientEvidence'), 'There is not enough evidence yet');
+  assert.equal(translate('pt-BR', 'officialPrep.insufficientEvidence'), 'Ainda não há evidências suficientes');
 
-  for (const featureName of FEATURE_NAMES) {
-    const combinedCatalog = `${Object.values(catalogs.en).join(' ')} ${Object.values(catalogs['pt-BR']).join(' ')}`;
-    assert.ok(combinedCatalog.includes(featureName));
+  const englishCatalog = Object.values(catalogs.en).join(' ');
+  for (const featureName of FEATURE_NAMES.filter((name) => name !== 'Mapa de Preparação')) {
+    assert.ok(englishCatalog.includes(featureName));
   }
 });
 

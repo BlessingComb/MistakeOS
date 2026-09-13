@@ -26,6 +26,8 @@ export function OnboardingFlow({ source, onComplete, onSkip }: Props) {
   const [stage, setStage] = useState<Stage>('hook');
   const [answers, setAnswers] = useState<OnboardingAnswers>(EMPTY_ANSWERS);
   const [analyzing, setAnalyzing] = useState(false);
+  const [completing, setCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState(false);
   const profile = useMemo(() => deriveInitialProfile(answers), [answers]);
 
   useEffect(() => {
@@ -79,8 +81,30 @@ export function OnboardingFlow({ source, onComplete, onSkip }: Props) {
   };
 
   const finish = async (action: CompletionAction) => {
+    if (completing) return;
     if (action === 'add') trackEvent('first_mistake_cta_clicked', { source: 'onboarding' });
-    await onComplete(answers, action);
+    setCompletionError(false);
+    setCompleting(true);
+    try {
+      await onComplete(answers, action);
+    } catch {
+      setCompletionError(true);
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const skip = async (currentStage: Stage) => {
+    if (completing) return;
+    setCompletionError(false);
+    setCompleting(true);
+    try {
+      await onSkip(currentStage);
+    } catch {
+      setCompletionError(true);
+    } finally {
+      setCompleting(false);
+    }
   };
 
   if (stage === 'hook') {
@@ -102,9 +126,10 @@ export function OnboardingFlow({ source, onComplete, onSkip }: Props) {
             <Text style={styles.hookBody}>{t('onboarding.hookBody')}</Text>
           </View>
           <PrimaryButton label={t('onboarding.hookCta')} meta={t('onboarding.hookMeta')} tone="mastered" onPress={() => move('subjects')} />
-          <Pressable accessibilityRole="button" onPress={() => onSkip(stage)} style={styles.skipButton}>
+          <Pressable accessibilityRole="button" accessibilityState={{ disabled: completing }} disabled={completing} onPress={() => { void skip(stage); }} style={[styles.skipButton, completing && styles.disabled]}>
             <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
           </Pressable>
+          {completionError && <Text accessibilityRole="alert" style={styles.completionError}>{t('onboarding.saveError')}</Text>}
         </View>
       </ScrollView>
     );
@@ -214,12 +239,13 @@ export function OnboardingFlow({ source, onComplete, onSkip }: Props) {
           )}
           {stage === 'action' && (
             <>
-              <PrimaryButton label={t('onboarding.addFirstMistake')} meta={t('mistake.saveMeta')} tone="risk" onPress={() => finish('add')} />
-              <Pressable accessibilityRole="button" onPress={() => finish('later')} style={styles.laterButton}>
+              <PrimaryButton disabled={completing} label={t('onboarding.addFirstMistake')} meta={t('mistake.saveMeta')} tone="risk" onPress={() => { void finish('add'); }} />
+              <Pressable accessibilityRole="button" accessibilityState={{ disabled: completing }} disabled={completing} onPress={() => { void finish('later'); }} style={[styles.laterButton, completing && styles.disabled]}>
                 <Text style={styles.laterText}>{t('onboarding.later')}</Text>
               </Pressable>
             </>
           )}
+          {completionError && <Text accessibilityRole="alert" style={styles.completionError}>{t('onboarding.saveError')}</Text>}
         </View>
       </View>
     </ScrollView>
@@ -332,4 +358,6 @@ const styles = createThemedStyles((colors) => StyleSheet.create({
   actionBody: { color: colors.muted, fontFamily: type.regular, fontSize: 15, lineHeight: 23, marginTop: spacing.md },
   laterButton: { alignSelf: 'center', padding: spacing.md, marginTop: spacing.xs },
   laterText: { color: colors.faint, fontFamily: type.semibold, fontSize: 12 },
+  completionError: { color: colors.risk, fontFamily: type.semibold, fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: spacing.sm },
+  disabled: { opacity: 0.55 },
 }));

@@ -1,0 +1,190 @@
+# Auditoria acadêmica global dos catálogos
+
+> Revisão local e não destrutiva. Nenhuma skill foi mesclada ou alterada.
+
+## Contagens verificadas
+
+- PSC 1: 313
+- PSC 2: 165
+- PSC 3: 285
+- ENEM: 378
+- Associações avaliáveis totais: 1141.
+- Códigos canônicos únicos: 1137.
+
+## Equivalências e semelhanças entre catálogos
+
+| Catálogo A | Skill A | Catálogo B | Skill B | Motivo | Confiança | Recomendação |
+|---|---|---|---|---|---|---|
+| PSC 1 | chemistry.calculo-estequiometrico — Cálculo estequiométrico | ENEM | chemistry.calculos-estequiometricos — Cálculos estequiométricos | Diferença somente de singular/plural ou flexão superficial | HIGH | MERGE RECOMMENDED |
+| PSC 1 | literature.portuguese-indigenous-african-latin-american — Literatura portuguesa, indígena, africana e latino-americana | PSC 3 | language.literatura-portuguesa-indigena-africana-e-a-latino-americana — Literatura portuguesa, indígena, africana e a latino-americana | Alta sobreposição terminológica (100%) | MEDIUM-HIGH | PROFESSOR REVIEW |
+| PSC 2 | literature.portuguese-indigenous-african-latin-american — Literatura portuguesa, indígena, africana e latino-americana | PSC 3 | language.literatura-portuguesa-indigena-africana-e-a-latino-americana — Literatura portuguesa, indígena, africana e a latino-americana | Alta sobreposição terminológica (100%) | MEDIUM-HIGH | PROFESSOR REVIEW |
+| PSC 3 | biology.infeccoes-sexualmente-transmissiveis-ists — Infecções Sexualmente Transmissíveis (ISTs) | ENEM | biology.infeccoes-sexualmente-transmissiveis — Infecções Sexualmente Transmissíveis | Alta sobreposição terminológica (100%) | MEDIUM | KEEP SEPARATE |
+
+## POSSIBLE DUPLICATE (14)
+
+- **PSC 2 · geography.brazil-global-economy** — Brasil no cenário da economia global — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.globalization-networks-multinationals** — Globalização, redes, mercadorias e multinacionais — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.neoliberalism-brazil-world** — Globalização, neoliberalismo e economia no Brasil e no mundo — Anexo 1, p. 19 — Geografia
+- **PSC 2 · biology.biogeochemical-cycles** — Ciclos biogeoquímicos — Anexo 1, p. 20 — Biologia
+- **PSC 2 · biology.biological-risk-protection** — Equipamentos de proteção individual e coletiva na prevenção de danos biológicos — Anexo 1, p. 20 — Biologia
+- **PSC 2 · chemistry.radioactivity-radioisotopes** — Radioatividade e características dos radioisótopos — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.energy-production-environment** — Produção e conversão de energia e interações com o meio ambiente — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.biogeochemical-cycles** — Características químicas dos ciclos biogeoquímicos — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.safety-equipment** — Equipamentos de proteção individual e coletiva — Anexo 1, p. 20 — Química
+- **PSC 2 · physics.radioactivity-radiation-applications** — Radioatividade e aplicações da radiação — Anexo 1, pp. 20–21 — Física
+- **PSC 2 · physics.electric-energy-generation-transmission** — Geração e transmissão de energia elétrica — Anexo 1, p. 21 — Física
+- **PSC 2 · physics.energy-efficiency-sustainable-storage** — Eficiência energética e formas sustentáveis de obtenção e armazenamento de energia — Anexo 1, p. 21 — Física
+- **PSC 2 · physics.physical-risk-protection** — Proteção individual e coletiva contra riscos físicos — Anexo 1, p. 21 — Física
+- **PSC 3 · language.literatura-portuguesa-indigena-africana-e-a-latino-americana** — Literatura portuguesa, indígena, africana e a latino-americana — Anexo 2, p. 24 — LÍNGUA PORTUGUESA E LITERATURA
+
+## SOURCE AMBIGUITY (4)
+
+- **PSC 2 · language.argumentative-text.cohesion** — Texto dissertativo-argumentativo e elementos coesivos — Anexo 1, p. 16 — Língua Portuguesa e Literatura
+- **PSC 2 · literature.portuguese-indigenous-african-latin-american** — Literatura portuguesa, indígena, africana e latino-americana — Anexo 1, p. 16 — Língua Portuguesa e Literatura
+- **PSC 2 · history.bourgeois-revolutions** — Revoluções burguesas Inglesa, Francesa e Industrial — Anexo 1, p. 17 — História
+- **PSC 3 · foreign-language.ela-versara-sobre-compreensao-de-textos-com-dominio-de-um-vocabulario-basico-e-da-estrutura** — Ela versará sobre compreensão de textos, com domínio de um vocabulário básico e da estrutura gramatical da língua — Anexo 2, p. 24 — LÍNGUA ESTRANGEIRA
+
+## REVIEW RECOMMENDED (131)
+
+- **PSC 1 · history.civilizacoes-do-crescente-fertil-e-do-oriente-proximo-mesopotamia-fenicia-hebreus-imperio-pe** — Civilizações do Crescente Fértil e do Oriente Próximo: Mesopotâmia; Fenícia; Hebreus; Império Persa — Anexo 1, p. 16 — HISTÓRIA
+- **PSC 1 · history.formacao-dos-estados-nacionais-europeus-a-formacao-dos-estados-nacionais-europeus-transforma** — Formação dos Estados Nacionais europeus: a formação dos Estados Nacionais europeus: transformações políticas, sociais e territoriais — Anexo 1, p. 16–17 — HISTÓRIA
+- **PSC 1 · history.as-sociedades-indigenas-da-america-pre-colonial-os-astecas-os-maias-os-incas-cultura-religia** — As sociedades indígenas da América pré-colonial: os astecas, os maias, os incas: cultura, religião e organização política — Anexo 1, p. 16–17 — HISTÓRIA
+- **PSC 1 · history.os-primeiros-impactos-sobre-as-populacoes-indigenas-da-amazonia-os-primeiros-impactos-sobre** — Os primeiros impactos sobre as populações indígenas da Amazônia: os primeiros impactos sobre as populações indígenas da Amazônia: genocídio, violência, escravização, perda de territórios, doenças e resistência cultural e armada — Anexo 1, p. 16–17 — HISTÓRIA
+- **PSC 1 · geography.categorias-conceituais-da-geografia-pensamento-espacial-geografico-o-espaco-geografico-e-sua** — Categorias conceituais da Geografia: pensamento espacial geográfico: o espaço geográfico e sua formação; categorias geográficas: paisagem, lugar, território, região; diferenças entre categorias geográficas e o raciocínio geográfico — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.relacao-sociedade-natureza-as-transformacoes-tecnico-cientificas-os-processos-politicos-econ** — Relação sociedade-natureza: as transformações técnico-científicas, os processos políticos, econômicos, ambientais e culturais, na produção do espaço geográfico nos âmbitos local, nacional e mundial — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.historia-da-cartografia-formas-de-representacao-da-terra-ao-longo-do-tempo-historico-projeco** — História da Cartografia: formas de representação da Terra ao longo do tempo histórico: projeções cartográficas e escolas da cartografia — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.mapas-e-a-representacao-grafica-mapas-e-outras-formas-de-representacao-cartografica-e-grafic** — Mapas e a representação gráfica: mapas e outras formas de representação cartográfica e gráfica (croquis, planta, infográfico, anamorfose, mapa mental, modelos tridimensionais, maquetes, perfil topográfico) — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.linguagens-cartograficas-os-elementos-que-compoem-os-mapas-orientacao-escala-legenda-titulo** — Linguagens cartográficas: os elementos que compõem os mapas: orientação, escala, legenda, título e representação — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.fusos-horarios-os-fusos-horarios-no-mundo-e-no-brasil** — Fusos horários: os fusos horários: no mundo e no Brasil — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.as-novas-tecnologias-de-representacao-do-espaco-a-fotogrametria-fotografia-aerea** — As novas tecnologias de representação do espaço: a fotogrametria: fotografia aérea — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.relevo-tipos-de-relevo-formacao-e-transformacao** — Relevo: tipos de relevo: formação e transformação — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.extrativismos-tipos-de-extrativismos-mineral-vegetal-e-animal** — Extrativismos: tipos de extrativismos: mineral, vegetal e animal — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.hidrografia-e-recursos-hidricos-distribuicao-da-agua-no-planeta-aguas-subterraneas-aguas-oce** — Hidrografia e recursos hídricos: distribuição da água no planeta: águas subterrâneas, águas oceânicas, solos encharcados, rios, lagos, geleiras, calotas polares, entre outros — Anexo 1, p. 17 — GEOGRAFIA
+- **PSC 1 · geography.as-bacias-hidrograficas-mundiais-principais-bacias-hidrograficas-bacia-do-congo-bacia-do-mis** — As bacias hidrográficas mundiais: principais bacias hidrográficas: Bacia do Congo, Bacia do Mississipi-Missouri, Bacia da Prata, Bacia do Nilo, Bacia do Obi,, Bacia do Níger, Yang-Tsé, Ganges, Amarelo, outros — Anexo 1, p. 18 — GEOGRAFIA
+- **PSC 1 · geography.bacias-hidrograficas-brasileiras-principais-bacias-hidrograficas-bacia-amazonica-bacia-do-sa** — Bacias hidrográficas brasileiras: principais bacias hidrográficas: Bacia Amazônica, Bacia do São Francisco, Tocantins-Araguaia, Uruguai-Paraná-Paraguai e utilidades e aproveitamentos — Anexo 1, p. 18 — GEOGRAFIA
+- **PSC 1 · geography.a-bacia-hidrografica-amazonica-a-bacia-hidrografica-amazonica-principais-afluentes-suas-util** — A bacia hidrográfica amazônica: a bacia hidrográfica Amazônica: principais afluentes, suas utilidades e aproveitamentos — Anexo 1, p. 18 — GEOGRAFIA
+- **PSC 1 · geography.a-dinamica-climatica-da-terra-dinamica-climatica-da-terra-a-natureza-atmosferica-seus-elemen** — A dinâmica climática da Terra: dinâmica climática da Terra: a natureza atmosférica, seus elementos e fatores climáticos — Anexo 1, p. 18 — GEOGRAFIA
+- **PSC 1 · geography.classificacao-dos-climas-climas-mundiais-tropical-subtropical-desertico-artico-de-montanhas** — Classificação dos climas: climas mundiais: tropical, subtropical, desértico, ártico, de montanhas, mediterrâneo, polar, temperado, árido semiárido, equatorial, continental — Anexo 1, p. 18 — GEOGRAFIA
+- **PSC 1 · geography.formacoes-vegetais-no-mundo-os-principais-biomas-mundiais-tundra-floresta-boreal-ou-taiga-fl** — Formações vegetais no mundo: os principais biomas mundiais: Tundra, Floresta Boreal ou Taiga, Floresta Mediterrânea, Floresta Temperada, Pradarias e/ou estepes, Savanas, Vegetação Desértica, Floresta Tropical, Floresta de Coníferas — Anexo 1, p. 18 — GEOGRAFIA
+- **PSC 1 · geography.meios-de-transporte-meios-de-transporte-modais-terrestre-ou-rodoviario-aquaticos-hidroviario** — Meios de transporte: meios de transporte (modais): terrestre ou rodoviário, aquáticos, hidroviário ou fluvial, lacustres (feito por meio de lagos e lagoas), aéreos, ferroviário, marítimo, dutoviários (tubulações que transportam líquidos ou gases, como petróleo e gás natural) — Anexo 1, p. 18 — GEOGRAFIA
+- **PSC 1 · geography.comunicacao-e-globalizacao-meios-digitais-de-comunicacao-na-geografia-internet-redes-sociais** — Comunicação e globalização: meios digitais de comunicação na Geografia: internet, redes sociais (Instagram, TikTok, X/Twitter, etc.); plataformas de mensagens instantâneas (WhatsApp, Telegram), streaming, ecommerce e plataformas digitais — Anexo 1, p. 18–19 — GEOGRAFIA
+- **PSC 1 · geography.cidadania-e-participacao-politica-uso-de-redes-sociais-para-organizacao-de-movimentos-sociai** — Cidadania e participação política: uso de redes sociais para organização de movimentos sociais, protestos, campanhas políticas, disseminação de informações (e também de fake news) e seu impacto nos territórios — Anexo 1, p. 18–19 — GEOGRAFIA
+- **PSC 1 · geography.impactos-da-tecnologia-sobre-o-meio-ambiente-consumo-energetico-de-data-centers-e-redes-de-t** — Impactos da tecnologia sobre o meio ambiente: consumo energético de data centers e redes de telecomunicação; Produção de lixo eletrônico (dispositivos conectados); Redução de deslocamentos físicos (impacto positivo), mas aumento da demanda por infraestrutura tecnológica (impacto negativo); Integração em múltiplas escalas (Local, Regional/Nacional, Global) — Anexo 1, p. 18–19 — GEOGRAFIA
+- **PSC 1 · chemistry.evolucao-quimica-modelos-e-teorias-sobre-a-origem-dos-elementos-quimicos-origem-dos-elemento** — Evolução química: modelos e teorias sobre a origem dos elementos químicos: origem dos elementos químicos — Anexo 1, p. 20 — QUÍMICA
+- **PSC 1 · physics.transformacoes-e-conservacao-da-energia-energia-cinetica-energia-potencial-gravitacional-con** — Transformações e conservação da energia: energia cinética; energia potencial gravitacional; conservação da energia mecânica; forças conservativas; energia potencial elástica — Anexo 1, p. 20 — FÍSICA
+- **PSC 1 · physics.astronomia-estrelas-planetas-satelite-outros-corpos-celestes-forca-gravitacional** — Astronomia: estrelas; planetas; satélite; outros corpos celestes; força gravitacional — Anexo 1, p. 20 — FÍSICA
+- **PSC 1 · physics.calor-termodinamica-e-saude-transferencia-de-calor-conducao-conveccao-e-radiacao-e-aplicacoe** — Calor, termodinâmica e saúde: transferência de calor: condução, convecção e radiação e aplicações térmicas no cotidiano e na indústria — Anexo 1, p. 20 — FÍSICA
+- **PSC 1 · physics.propriedades-termicas-dos-materiais-condutividade-termica-e-eletrica-densidade-dilatacao-ter** — Propriedades térmicas dos materiais: condutividade térmica e elétrica, densidade, dilatação térmica, resistência mecânica e escolha de materiais para uso sustentável (isolantes ecológicos, materiais recicláveis) — Anexo 1, p. 20 — FÍSICA
+- **PSC 1 · mathematics.funcao-afim-funcoes-polinomiais-do-1o-grau-leitura-e-interpretacao-de-tabelas-plano-cartesia** — Função afim (funções polinomiais do 1º grau); leitura e interpretação de tabelas; plano cartesiano; generalização algébrica — Anexo 1, p. 21 — MATEMÁTICA
+- **PSC 2 · literature.realist-universal-themes** — Temáticas universais, rupturas e permanências na literatura realista brasileira e portuguesa — Anexo 1, p. 16 — Língua Portuguesa e Literatura
+- **PSC 2 · history.mercantilism-colonial-system** — Sistema colonial e mercantilismo: economia, exploração e acumulação — Anexo 1, p. 16 — História
+- **PSC 2 · history.colonial-economy-european-development** — Economia colonial, desenvolvimento europeu e interesses dos grupos no poder — Anexo 1, p. 16 — História
+- **PSC 2 · history.atlantic-slave-trade-diaspora** — Tráfico atlântico e diáspora africana: agentes e impactos socioculturais — Anexo 1, p. 16 — História
+- **PSC 2 · history.africa-brazil-productive-system** — Africanos e afrodescendentes como agentes do sistema produtivo na América Portuguesa — Anexo 1, p. 16 — História
+- **PSC 2 · history.amazon-conquest-xvi-xviii** — Conquista da Amazônia (XVI–XVIII): administração, exploração, dominação e políticas indigenistas — Anexo 1, p. 16 — História
+- **PSC 2 · history.church-in-amazon** — Igreja na Amazônia: hegemonia missionária, clero secular e atuação inquisitorial — Anexo 1, p. 16 — História
+- **PSC 2 · history.pombaline-period-directory-indians** — Período Pombalino no Amazonas e Diretório dos Índios — Anexo 1, p. 16 — História
+- **PSC 2 · history.amazon-colonial-disputes-treaties** — Amazônia nas disputas coloniais e impactos dos Tratados de Madri e Santo Ildefonso — Anexo 1, p. 16 — História
+- **PSC 2 · history.women-resistance-agency-erasure** — Mulheres indígenas, africanas e europeias: resistência, agência e apagamento histórico — Anexo 1, p. 16 — História
+- **PSC 2 · history.absolutism-enlightenment** — Absolutismo e Iluminismo e seus impactos na estrutura colonial americana — Anexo 1, p. 17 — História
+- **PSC 2 · history.brazilian-empire-second-reign** — Império brasileiro: Segundo Reinado — Anexo 1, p. 17 — História
+- **PSC 2 · history.slavery-abolition-post-abolition** — Crise do trabalho escravizado, abolição legal e pós-abolição — Anexo 1, p. 17 — História
+- **PSC 2 · history.black-slavery-amazonas** — Escravidão negra no Amazonas: trabalho, fuga e abolição — Anexo 1, p. 17 — História
+- **PSC 2 · history.amazon-belle-epoque-rubber** — Belle Époque Amazônica e exploração gomífera — Anexo 1, p. 17 — História
+- **PSC 2 · history.european-nationalisms** — Nacionalismos europeus, disputas por hegemonia e exclusão — Anexo 1, p. 17 — História
+- **PSC 2 · history.labor-movement-vargas-rise** — Conflitos trabalhistas, movimento operário e ascensão de Vargas em 1930 — Anexo 1, p. 17 — História
+- **PSC 2 · history.popular-citizenship-struggles** — Mulheres, negros, indígenas e grupos populares nas lutas por cidadania e poder — Anexo 1, p. 17 — História
+- **PSC 2 · geography.amazon-colonization-expansion** — Colonização, formação e expansão territorial da Amazônia — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.brazil-border-disputes** — Disputas fronteiriças e territórios incorporados ao Brasil — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.brazil-development-projects** — Projetos de desenvolvimento territorial do Estado brasileiro — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.brazil-regionalization** — Região, regionalização e planejamento regional no Brasil — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.world-regionalization-development** — Regionalizações do espaço mundial e níveis de desenvolvimento — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.south-south-cooperation** — Cooperação Sul-Sul e países subdesenvolvidos — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.brazil-sovereignty-land-borders** — Soberania nacional e fronteiras terrestres — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.brazil-maritime-borders** — Fronteiras marítimas, Amazônia Azul e Zona Econômica Exclusiva — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.demographic-theories** — Demografia, teorias demográficas e desenvolvimento econômico — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.population-graphic-representation** — Representação gráfica e estrutura etária da população — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.population-distribution-indicators** — Distribuição da população e indicadores socioeconômicos — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.demographic-transition-social-problems** — Crescimento vegetativo, transição demográfica, habitação, saúde e educação — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.migration-dynamics** — Dinâmica populacional e movimentos migratórios — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.migration-conflicts-xenophobia** — Migração, conflitos, diversidade cultural e xenofobia — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.indigenous-land-demarcation** — Povos originários e demarcação de terras — Anexo 1, p. 18 — Geografia
+- **PSC 2 · geography.industrial-production-revolutions** — Produção industrial e revoluções industriais — Anexo 1, pp. 18–19 — Geografia
+- **PSC 2 · geography.brazil-industrialization-zfm** — Industrialização brasileira e Zona Franca de Manaus — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.agricultural-production-systems** — Produção agrícola, Revolução Verde e sistemas agrícolas — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.land-structure-agrarian-reform** — Estrutura fundiária, questão agrária e Reforma Agrária — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.agribusiness-environment** — Agronegócio, commodities e meio ambiente — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.work-technology-unemployment** — Sociedade, economia, tecnologia e mundo do trabalho — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.work-social-indicators-amazonas** — Trabalho e indicadores sociais no Brasil e no Amazonas — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.urban-hierarchy-networks** — Hierarquia urbana e redes urbanas — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.brazil-amazonas-urbanization** — Urbanização no Brasil e no Amazonas — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.urban-segregation-inequality** — Segregação urbana e desigualdade social — Anexo 1, p. 19 — Geografia
+- **PSC 2 · geography.city-planning-statute** — Organização das cidades, Plano Diretor e Estatuto da Cidade — Anexo 1, p. 19 — Geografia
+- **PSC 2 · biology.climate-international-agreements** — Protocolo de Kyoto e Acordo de Paris — Anexo 1, p. 20 — Biologia
+- **PSC 2 · biology.human-physiology-digestive-respiratory-circulatory** — Fisiologia humana: sistemas digestório, respiratório e circulatório — Anexo 1, p. 20 — Biologia
+- **PSC 2 · biology.human-physiology-excretory-nervous-endocrine** — Fisiologia humana: sistemas excretor, nervoso e endócrino — Anexo 1, p. 20 — Biologia
+- **PSC 2 · biology.virology-epidemiology** — Virologia, epidemiologia, epidemias e pandemias — Anexo 1, p. 20 — Biologia
+- **PSC 2 · biology.public-health** — Saúde pública, imunização, medicamentos e desigualdade — Anexo 1, p. 20 — Biologia
+- **PSC 2 · chemistry.material-thermal-properties** — Propriedades térmicas dos materiais e mudanças de estado — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.environmental-system-imbalances** — Desequilíbrio de sistemas: efeito estufa, aquecimento global, pesticidas e fertilizantes — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.nuclear-radiation-decay** — Radiações nucleares e leis de decaimento — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.radiation-effects** — Implicações, benefícios e efeitos da radiação nos seres vivos — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.renewable-nonrenewable-energy** — Fontes renováveis e não renováveis e eficiência dos combustíveis — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.electrochemistry** — Eletroquímica: pilhas, baterias, eletrólise, oxidação, redução e corrosão — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.fuels-combustion-enthalpy** — Combustíveis fósseis, entalpia de combustão e biocombustíveis — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.chemical-kinetics** — Cinética química: velocidade, teoria das colisões e fatores de reação — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.ozone-chemical-equilibrium** — Camada de ozônio e equilíbrio químico — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.nuclear-accidents** — Acidentes nucleares: Chernobyl, Fukushima, Three Mile Island e Goiânia — Anexo 1, p. 20 — Química
+- **PSC 2 · chemistry.pesticides-chemical-waste** — Agrotóxicos e produção e descarte de produtos químicos — Anexo 1, p. 20 — Química
+- **PSC 2 · physics.calorimetry** — Calorimetria: calor, propagação, pressão, volume, rendimento e energia — Anexo 1, p. 20 — Física
+- **PSC 2 · physics.thermal-radiation-environment** — Transferência de energia térmica por radiação e impactos ambientais — Anexo 1, p. 20 — Física
+- **PSC 2 · physics.electromagnetic-radiation** — Radiações eletromagnéticas: espectro, fontes e interação com a matéria — Anexo 1, p. 20 — Física
+- **PSC 2 · physics.nuclear-technology-impacts** — Tecnologia nuclear: usos, riscos e impactos sociais, ambientais e de saúde — Anexo 1, pp. 20–21 — Física
+- **PSC 2 · physics.electrodynamics-devices** — Eletrodinâmica e dispositivos elétricos — Anexo 1, p. 21 — Física
+- **PSC 2 · physics.renewable-energy-thermal-transformations** — Fontes renováveis e transformações de energia em sistemas térmicos — Anexo 1, p. 21 — Física
+- **PSC 2 · physics.electric-shock** — Choque elétrico e efeito fisiológico da corrente elétrica — Anexo 1, p. 21 — Física
+- **PSC 2 · math.financial-progressions** — Matemática financeira com progressões aritméticas e geométricas — Anexo 1, p. 21 — Matemática
+- **PSC 2 · math.algorithms-flowcharts-logic** — Algoritmos, fluxogramas e lógica matemática — Anexo 1, p. 21 — Matemática
+- **PSC 2 · math.programming-logic-algorithmic-reasoning** — Lógica de programação e raciocínio algorítmico — Anexo 1, p. 21 — Matemática
+- **PSC 2 · math.technology-measurement-conversions** — Unidades de medida e conversões em contextos tecnológicos — Anexo 1, p. 21 — Matemática
+- **PSC 2 · math.metric-community-spaces** — Geometria métrica aplicada a espaços comunitários — Anexo 1, p. 21 — Matemática
+- **PSC 3 · history.periodo-entreguerras-o-entreguerras-e-a-ascensao-dos-estados-unidos-da-america-o-fortalecime** — Período Entreguerras: o Entreguerras e a ascensão dos Estados Unidos da América: o fortalecimento econômico, político e cultural dos Estados Unidos no período entre guerras, com destaque para o modelo liberal, a crise de 1929 e sua influência global — Anexo 2, p. 24 — HISTÓRIA
+- **PSC 3 · history.guerras-mundiais-e-seus-impactos-globais-e-locais-a-participacao-do-brasil-e-os-reflexos-na** — Guerras Mundiais e seus impactos globais e locais: a participação do Brasil e os reflexos na Amazônia: a participação nas guerras mundiais, com ênfase nos impactos sociais, econômicos e estratégicos na região amazônica, como a intensa exploração gomífera e a presença militar — Anexo 2, p. 24 — HISTÓRIA
+- **PSC 3 · history.descolonizacao-da-africa-e-da-asia-descolonizacao-da-africa-e-da-asia-lutas-por-independenci** — Descolonização da África e da Ásia: descolonização da África e da Ásia: lutas por independência no contexto pós-Segunda Guerra Mundial — Anexo 2, p. 24–25 — HISTÓRIA
+- **PSC 3 · history.contracultura-e-revolucoes-tecnico-cientificas-contracultura-movimentos-culturais-contestato** — Contracultura e revoluções técnico-científicas: contracultura: movimentos culturais contestatórios (hippies, feminismo, movimento negro internacional, ecologia) — Anexo 2, p. 24–25 — HISTÓRIA
+- **PSC 3 · history.analise-critica-do-presente-a-democracia-em-risco-fake-news-extremismos-politicos-e-discurso** — Análise crítica do presente: a democracia em risco: fake news, extremismos políticos e discursos de ódio — Anexo 2, p. 24–25 — HISTÓRIA
+- **PSC 3 · geography.as-fases-do-modo-de-producao-capitalista-comercial-industrial-financeiro-e-informacional-ord** — As fases do modo de produção capitalista: comercial, industrial, financeiro e informacional: ordenando territórios — Anexo 2, p. 25 — GEOGRAFIA
+- **PSC 3 · geography.a-industrializacao-no-mundo-contemporaneo-a-industrializacao-reino-unido-franca-e-alemanha** — A industrialização no mundo contemporâneo: a industrialização: Reino Unido, França e Alemanha — Anexo 2, p. 25 — GEOGRAFIA
+- **PSC 3 · geography.industrializacao-e-a-disputa-de-poder-mundial-p-roducao-industrial-mudancas-no-modo-de-produ** — Industrialização e a disputa de poder mundial: p rodução Industrial: mudanças no modo de produção; desenvolvimento tecnológico; mudanças sociais; impactos econômicos; urbanização — Anexo 2, p. 25 — GEOGRAFIA
+- **PSC 3 · geography.geopolitica-a-nova-ordem-do-capital-geopolitica-versus-globalizacao** — Geopolítica: a nova ordem do capital: geopolítica versus globalização — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.geopolitica-mundial-e-as-fronteiras-globalizacao-e-subdesenvolvimento-os-muros-que-dividem-a** — Geopolítica mundial e as fronteiras: Globalização e subdesenvolvimento: os muros que dividem as fronteiras e os homens: as disputas políticas, econômicas e religiosas — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.modelos-de-producao-producao-artesanal-trabalho-manual-pequena-escala-geralmente-familiar-pr** — Modelos de Produção: Produção artesanal: trabalho manual, pequena escala, geralmente familiar; Produção manufatureira: início da mecanização, concentração em pequenas fábricas; Produção industrial: uso intenso de máquinas e tecnologia; alta divisão do trab alho; Produção pós-fordista/flexível: automação, terceirização, globalização do processo produtivo — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.producao-e-o-espaco-geografico-distribuicao-industrial-desigual-e-desconcentracao-industrial** — Produção e o Espaço Geográfico: distribuição industrial desigual e desconcentração industrial Produção Sustentável: tecnologias limpas e processos produtivo s que reduzem impactos ambientais; Agroecologia e Economia Circular — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.as-formas-de-emprego-primario-agricultura-pesca-extrativismo-secundario-industria-e-construc** — As formas de emprego: primário: agricultura, pesca, extrativismo; secundário: indústria e construção; terciário: comércio, serviços, transportes, turismo; e quaternário: serviços ligados ao conhecimento (tecnologia, pesquisa, TI) — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.rrrrelacoes-de-trabalho-formal-x-informal-presenca-ou-nao-de-direitos-trabalhistas-terceiriz** — RRRelações de Trabalho: Formal x informal: presença ou não de direitos trabalhistas; terceirização e precarização do trabalho em ambientes urbanos; e emprego e desemprego: taxa de ocupação, subemprego e desemprego e strutural — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.blocos-economicos-e-organismos-internacionais-a-formacao-e-a-influencia-dos-blocos-economico** — Blocos econômicos e organismos internacionais: a formação e a influência dos blocos econômicos: regionalização para garantir o mercado — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.associacoes-e-blocos-economicos-uniao-europeia-ue-e-a-zona-do-euro-mercosul-usmca-antiga-naf** — Associações e Blocos Econômicos: União Europeia (UE) e a zona do Euro; Mercosul; USMCA (antiga NAFTA); ASEAN (Associação das Nações do Sudoeste Asiático); BRICS; APEC (Associação de Cooperação Econômica Ásia-Pacífico); União Africana — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.instituicoes-intergovernamentais-globais-onu-omc-oit-oms-fmi-fao-bid-banco-mundial-e-unesco** — Instituições intergovernamentais Globais: ONU, OMC, OIT, OMS, FMI, FAO, BID, Banco Mundial e UNESCO, UNICEF, UNIDO; Instituições intergovernamentais Regionais: OEA, OTAN, OPEP, OCDE, Cepal — Anexo 2, p. 26 — GEOGRAFIA
+- **PSC 3 · geography.guerras-civis-organizacao-do-espaco-geografico-reconfiguracao-do-territorio-deslocamentos-po** — Guerras civis: organização do Espaço Geográfico: reconfiguração do território (deslocamentos populacionais, surgimento de zonas de controle, destruição urbana) - Globalização e Interdependência: conflitos locais com repercussões globais (refugiados, migração em massa, crise humanitária); atuação de organismos internacionais (ONU, Médicos Sem Fronteiras) nos conflitos — Anexo 2, p. 26–27 — GEOGRAFIA
+- **PSC 3 · geography.meio-ambiente-e-conflitos-impactos-ambientais-das-guerras-destruicao-de-ecossistemas-conflit** — Meio ambiente e conflitos: impactos ambientais das guerras: destruição de ecossistemas, conflitos por recursos naturais (água, petróleo, terras férteis) — Anexo 2, p. 26–27 — GEOGRAFIA
+- **PSC 3 · geography.relacoes-entre-producao-territorio-e-diversidade-cultural-cadeias-produtivas-e-setores-chave** — Relações entre produção, território e diversidade cultural: cadeias produtivas e setores-chave no Brasil: agropecuária intensiva: monocultura, agronegócio, uso de agrotóxicos, extrativismo mineral e vegetal: mineração, petróleo, madeira, borracha — Anexo 2, p. 26–27 — GEOGRAFIA
+- **PSC 3 · geography.impactos-socioambientais-desmatamento-poluicao-e-perda-da-biodiversidade-conflitos-socioambi** — Impactos socioambientais: desmatamento (poluição e perda da biodiversidade); conflitos socioambientais (grilagem de terras, expulsão de populações locais); e mudanças no uso da terra (expansão da fronteira agrícola, degradação de biomas, como Amazônia, Cerrado e Pantanal) — Anexo 2, p. 26–27 — GEOGRAFIA
+- **PSC 3 · geography.populacoes-tradicionais-e-praticas-agroextrativistas-comunidades-indigenas-quilombolas-e-rib** — Populações tradicionais e práticas agroextrativistas: comunidades indígenas, quilombolas e ribeirinhas: sua relação sustentável com o território; sistemas agroextrativistas: coleta de frutos nativos, pesca artesanal, agricultura de subsistência; a luta por direitos territoriais e pela preservação de seus modos de vida — Anexo 2, p. 26–27 — GEOGRAFIA
+- **PSC 3 · geography.sustentabilidade-e-escalas-de-analise-impacto-direto-em-comunidades-e-ecossistemas-exportaca** — Sustentabilidade e escalas de análise: impacto direto em comunidades e ecossistemas; exportação de commodities, pressão de mercados internacionais; desenvolvimento sustentável: equilíbrio entre crescimento econômico, justiça social e proteção ambiental — Anexo 2, p. 26–27 — GEOGRAFIA
+- **PSC 3 · biology.genetica-e-outros-tipos-de-heranca-herancas-mendelianas-1a-e-2a-lei-de-mendel** — Genética e outros tipos de herança: heranças mendelianas: 1ª e 2ª Lei de Mendel — Anexo 2, p. 27 — BIOLOGIA
+- **PSC 3 · physics.lentes-convergentes-e-divergentes-construcao-funcionamento-e-aplicacoes-formacao-de-imagem-p** — Lentes convergentes e divergentes: construção, funcionamento e aplicações; Formação de imagem por lentes esféricas (princípios de refração); Aplicações: óculos, lupas, microscópios e câmeras — Anexo 2, p. 28 — FÍSICA
+- **PSC 3 · physics.energia-nuclear-principio-fisico-fissao-nuclear** — Energia nuclear: princípio físico: fissão nuclear — Anexo 2, p. 28 — FÍSICA
+- **PSC 3 · physics.investigacao-cientifica-em-fisica-divulgacao-e-comunicacao-popularizar-a-ciencia-democratiza** — Investigação científica em física: divulgação e comunicação: popularizar a ciência, democratizar o acesso ao conhecimento científico e estabelecer condições para a alfabetização científica em física — Anexo 2, p. 28 — FÍSICA
+- **ENEM · language.papeis-sociais-e-comunicativos-dos-interlocutores-relacao-entre-usos-e-propositos-comunicati** — Papéis sociais e comunicativos dos interlocutores, relação entre usos e propósitos comunicativos, função sociocomunicativa do gênero, aspectos da dimensão espaçotemporal em que se produz o texto — Matriz de Referência, p. 35 — Linguagens, Códigos e suas Tecnologias — Estudo do texto argumentativo, seus gêneros e recursos linguísticos: argumentação — tipo, gêneros e usos em Língua Portuguesa
+- **ENEM · language.uso-dos-recursos-linguisticos-em-relacao-ao-contexto-em-que-o-texto-e-constituido-elementos** — Uso dos recursos linguísticos em relação ao contexto em que o texto é constituído: elementos de referência pessoal, temporal, espacial, registro linguístico, grau de formalidade, seleção lexical, tempos e modos verbais — Matriz de Referência, p. 36 — Linguagens, Códigos e suas Tecnologias — Estudo dos aspectos linguísticos da Língua Portuguesa: usos da língua — norma culta e variação linguística
+
+## ERROR (0)
+
+- Nenhum.
+
+## Pares parecidos que devem permanecer distintos
+
+- Fontes de energia em Física, Biologia e Geografia: o objeto muda conforme mecanismo físico, impacto biológico ou organização territorial.
+- Investigação científica em Física, Química e Biologia: os métodos e unidades de evidência são disciplinares.
+- Leitura de gráficos em Matemática, Física e Linguagens: a operação cognitiva é semelhante, mas o conteúdo avaliado e a evidência de erro são diferentes.
+- Meio ambiente em Biologia, Química e Geografia: não deve virar uma skill genérica única.

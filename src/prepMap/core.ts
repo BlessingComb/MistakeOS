@@ -1,6 +1,7 @@
 import type { ExamRecord } from '../exams/core';
 import type { MistakeRecord } from '../mistakes/core';
 import type { SubjectId } from '../onboarding/core';
+import { calculateEvidenceRisk, RISK_HIGH_THRESHOLD, RISK_MASTERED_THRESHOLD } from './risk';
 
 export type PrepMapState = 'HIGH RISK' | 'RECOVERING' | 'MASTERED';
 
@@ -60,10 +61,8 @@ export function buildExamPrepMap(exam: ExamRecord, mistakes: readonly MistakeRec
 
 function buildItem(subject: SubjectId, topic: string | undefined, cause: NonNullable<MistakeRecord['cause']> | undefined, mistakes: MistakeRecord[], evidence: ReviewEvidence, now: Date): PrepMapItem {
   const reviewedCount = mistakes.reduce((total, mistake) => total + (evidence[mistake.id] ?? 0), 0);
-  const recentCount = mistakes.filter((mistake) => daysSince(mistake.createdAt, now) <= 14).length;
-  const baseRisk = 38 + mistakes.length * 17 + recentCount * 5;
-  const riskScore = Math.max(8, Math.min(100, baseRisk - reviewedCount * 18));
-  const state: PrepMapState = riskScore >= 70 ? 'HIGH RISK' : riskScore >= 30 ? 'RECOVERING' : 'MASTERED';
+  const riskScore = calculateEvidenceRisk(mistakes.map((mistake) => mistake.createdAt), reviewedCount, now);
+  const state: PrepMapState = riskScore >= RISK_HIGH_THRESHOLD ? 'HIGH RISK' : riskScore >= RISK_MASTERED_THRESHOLD ? 'RECOVERING' : 'MASTERED';
   return {
     id: `${subject}-${topic ?? 'unidentified'}-${cause ?? 'uncertain'}`,
     subject,
@@ -75,10 +74,6 @@ function buildItem(subject: SubjectId, topic: string | undefined, cause: NonNull
     estimatedMinutes: Math.max(3, Math.min(12, 2 + mistakes.length * 2)),
     reviewedCount,
   };
-}
-
-function daysSince(value: string, now: Date) {
-  return Math.max(0, Math.floor((now.getTime() - new Date(value).getTime()) / 86_400_000));
 }
 
 function dateOnly(value: Date) {

@@ -6,19 +6,20 @@ export type AnalysisClientResult =
   | { status: 'unavailable' }
   | { status: 'error'; reason: 'network' | 'rate-limit' | 'limit-reached' | 'invalid-image' | 'unauthorized' | 'server'; usage?: AnalysisUsage };
 
-export type AnalysisUsage = { usedThisMonth: number; monthlyLimit: number; remaining: number };
+export type AnalysisUsage = { usedToday: number; dailyLimit: number; remaining: number };
 
 export async function requestQuestionPhotoAnalysis(
   url: string,
   photo: { base64: string; mimeType: string },
   language: AppLanguage,
+  requestId?: string,
   fetcher: typeof fetch = fetch,
 ): Promise<AnalysisClientResult> {
   try {
     const response = await fetcher(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ imageBase64: photo.base64, mimeType: photo.mimeType, language }),
+      body: JSON.stringify({ requestId, imageBase64: photo.base64, mimeType: photo.mimeType, language }),
     });
     if (response.status === 429) return { status: 'error', reason: 'rate-limit' };
     if (response.status === 400 || response.status === 413 || response.status === 415) return { status: 'error', reason: 'invalid-image' };
@@ -41,7 +42,7 @@ export function parseAnalysisResponse(payload: unknown): { analysis: QuestionPho
   const analysis = parseQuestionPhotoAnalysis(value.analysis, typeof value.model === 'string' ? value.model : 'groq');
   if (!analysis) return null;
   const usageValue = value.usage as Partial<AnalysisUsage> | undefined;
-  const usage = usageValue && [usageValue.usedThisMonth, usageValue.monthlyLimit, usageValue.remaining].every((item) => typeof item === 'number')
+  const usage = usageValue && [usageValue.usedToday, usageValue.dailyLimit, usageValue.remaining].every((item) => typeof item === 'number')
     ? usageValue as AnalysisUsage : undefined;
   return { analysis, ...(usage ? { usage } : {}) };
 }

@@ -58,7 +58,7 @@ export function ReviewScreen({ mistakes, initialSubject = null, onCompleteReview
     safeHaptic(Haptics.impactAsync(resisted ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light));
     trackEvent(resisted ? 'mistake_pattern_resisted' : 'mistake_pattern_repeated', { subject: subject ?? 'unknown', errorType: question?.targetErrorType ?? 'uncertain' });
     if (questionIndex === 2) {
-      if (subject && sourceMistake) onCompleteReview([sourceMistake.id], subject, { clientId: recoverySet?.id ?? `recovery-${sourceMistake.id}`, topic: sourceMistake.topic ?? subject, targetedErrorType: question?.targetErrorType ?? sourceMistake.cause ?? 'uncertain', answers, startedAt, completedAt: new Date().toISOString() }, nextResistedCount >= 2).catch(() => undefined);
+      if (subject && sourceMistake) onCompleteReview([sourceMistake.id], subject, { clientId: recoverySet?.id ?? `recovery-${sourceMistake.id}`, mistakeClientId: sourceMistake.id, topic: sourceMistake.topic ?? subject, targetedErrorType: question?.targetErrorType ?? sourceMistake.cause ?? 'uncertain', answers, startedAt, completedAt: new Date().toISOString() }, nextResistedCount >= 2).catch(() => undefined);
       trackEvent('never_again_completed', { subject: subject ?? 'unknown', questionsCorrect: nextResistedCount, generator: 'local' });
       setResistedCount(nextResistedCount);
       setComplete(true);
@@ -81,7 +81,6 @@ export function ReviewScreen({ mistakes, initialSubject = null, onCompleteReview
         <MissionTop onExit={onExit} />
         <View style={styles.headingRow}>
           <View style={styles.headingCopy}>
-            <Text style={styles.overline}>{t('review.realEvidence')}</Text>
             <Text style={styles.missionTitle}>{sourceMistake.customSubject ?? t(subjectLabelKey(subject))}</Text>
           </View>
           <Pressable accessibilityRole="button" onPress={() => setSubject(null)} style={styles.changeTopic}>
@@ -98,7 +97,7 @@ export function ReviewScreen({ mistakes, initialSubject = null, onCompleteReview
           <Text style={styles.prompt}>{activeQuestion.prompt}</Text>
           <View style={styles.answerList}>{activeQuestion.options.map((option, index) => <Pressable key={option} disabled={checked} onPress={() => setSelectedOption(index)} style={[styles.answerOption, selectedOption === index && styles.answerSelected, checked && index === activeQuestion.correctOption && styles.answerCorrect, checked && selectedOption === index && index !== activeQuestion.correctOption && styles.answerIncorrect]}><Text style={styles.answerText}>{option}</Text></Pressable>)}</View>
           {checked && <View style={styles.revealPanel}><Text style={styles.revealLabel}>{isRecoveryAnswerCorrect(activeQuestion, selectedOption) ? t('review.patternResisted') : t('review.patternRepeatedNew')}</Text><Text style={styles.revealNote}>{isRecoveryAnswerCorrect(activeQuestion, selectedOption) ? t('review.patternResistedBody') : t('review.patternRepeatedBody')}</Text><Text style={styles.cause}>{t('review.repairRule')}: {recoverySet.repairRule}</Text><View style={styles.decisionBlock}><PrimaryButton label={questionIndex === 2 ? t('review.finishRecovery') : t('review.nextRecovery')} meta={t('review.recoveryMeta')} tone="mastered" onPress={advance} /></View></View>}
-          {!checked && <View style={styles.revealAction}><PrimaryButton label={t('review.checkRecovery')} meta={t('review.recoveryMeta')} onPress={() => { if (selectedOption !== null) { const correct=isRecoveryAnswerCorrect(activeQuestion, selectedOption); setAnswers((current)=>[...current,{questionId:activeQuestion.id,correct,patternResisted:correct,answeredAt:new Date().toISOString()}]); setChecked(true); trackEvent('recovery_question_answered', { subject, correct, errorType: activeQuestion.targetErrorType }); } }} /></View>}
+          {!checked && <View style={styles.revealAction}><PrimaryButton label={t('review.checkRecovery')} meta={t('review.recoveryMeta')} onPress={() => { if (selectedOption !== null) { const correct=isRecoveryAnswerCorrect(activeQuestion, selectedOption); setAnswers((current)=>[...current,{questionId:activeQuestion.id,selectedOption,answeredAt:new Date().toISOString()}]); setChecked(true); trackEvent('recovery_question_answered', { subject, correct, errorType: activeQuestion.targetErrorType }); } }} /></View>}
         </Reanimated.View>
         <Text style={styles.focusNote}>{t('review.focusNoteRecovery')}</Text>
       </View>
@@ -113,14 +112,13 @@ function MissionTop({ onExit }: { onExit: () => void }) {
       <Pressable accessibilityRole="button" accessibilityLabel={t('review.exitMission')} onPress={() => { safeHaptic(Haptics.selectionAsync()); onExit(); }} style={styles.exitButton}>
         <Feather name="x" size={17} color={colors.ink} /><Text style={styles.exitText}>{t('review.exit')}</Text>
       </Pressable>
-      <View style={styles.missionBadge}><View style={styles.liveDot} /><Text style={styles.missionBadgeText}>NEVER AGAIN</Text></View>
     </View>
   );
 }
 
 function RecoveryBriefing({ mistake, recoverySet, subject, onExit, onStart }: { mistake: MistakeRecord; recoverySet: ReturnType<typeof generateRecoverySet>; subject: SubjectId; onExit: () => void; onStart: () => void }) {
   const { t } = useTranslation();
-  return <ScrollView style={styles.screenBase} contentContainerStyle={styles.scroll}><View style={styles.screen}><MissionTop onExit={onExit} /><Text style={styles.overline}>{t('review.briefingEyebrow')}</Text><Text style={styles.pickerTitle}>{t('review.briefingTitle')}</Text><Text style={styles.instruction}>{mistake.customSubject ?? t(subjectLabelKey(subject))}</Text><View style={styles.briefCard}><Text style={styles.briefLabel}>{t('review.recurringPattern')}</Text><Text style={styles.briefValue}>{mistake.cause ? t(`onboarding.risk.${mistake.cause}` as never) : t('onboarding.risk.uncertain')}</Text><Text style={styles.briefLabel}>{t('review.repairRule')}</Text><Text style={styles.briefRule}>{recoverySet.repairRule}</Text></View><View style={styles.revealAction}><PrimaryButton label={t('review.startRecovery')} meta={t('review.recoveryDuration')} onPress={onStart} /></View></View></ScrollView>;
+  return <ScrollView style={styles.screenBase} contentContainerStyle={styles.scroll}><View style={styles.screen}><MissionTop onExit={onExit} /><Text style={styles.pickerTitle}>{t('review.briefingTitle')}</Text><Text style={styles.instruction}>{mistake.customSubject ?? t(subjectLabelKey(subject))}</Text><View style={styles.briefCard}><Text style={styles.briefLabel}>{t('review.recurringPattern')}</Text><Text style={styles.briefValue}>{mistake.cause ? t(`onboarding.risk.${mistake.cause}` as never) : t('onboarding.risk.uncertain')}</Text><Text style={styles.briefLabel}>{t('review.repairRule')}</Text><Text style={styles.briefRule}>{recoverySet.repairRule}</Text></View><View style={styles.revealAction}><PrimaryButton label={t('review.startRecovery')} meta={t('review.recoveryDuration')} onPress={onStart} /></View></View></ScrollView>;
 }
 
 function RecoveryComplete({ resistedCount, subject, customSubject, onDone }: { resistedCount: number; subject: SubjectId; customSubject?: string; onDone: () => void }) {
@@ -135,7 +133,7 @@ function TopicPicker({ groups, onChoose, onExit }: { groups: ReturnType<typeof g
     <ScrollView style={styles.screenBase} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       <View style={styles.screen}>
         <MissionTop onExit={onExit} />
-        <View style={styles.pickerHeading}><Text style={styles.overline}>{t('review.chooseTopicEyebrow')}</Text><Text style={styles.pickerTitle}>{t('review.chooseTopicTitle')}</Text><Text style={styles.instruction}>{t('review.chooseTopicBody')}</Text></View>
+        <View style={styles.pickerHeading}><Text style={styles.pickerTitle}>{t('review.chooseTopicTitle')}</Text><Text style={styles.instruction}>{t('review.chooseTopicBody')}</Text></View>
         {groups.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="camera" size={25} color={colors.signal} /></View>

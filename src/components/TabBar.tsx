@@ -3,19 +3,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from '../i18n';
 import { colors, createThemedStyles, radius, spacing, type } from '../theme';
 
-export type TabId = 'home' | 'review' | 'dna' | 'prepMap' | 'exams' | 'settings';
+export type TabId = 'home' | 'review' | 'dna' | 'prepMap' | 'exams' | 'classrooms' | 'settings';
 
 type Props = { active: TabId; onChange: (tab: TabId) => void };
 
 export function TabBar({ active, onChange }: Props) {
   const { t } = useTranslation();
   const tabs: { id: TabId; label: string; icon: keyof typeof Feather.glyphMap }[] = [
-    { id: 'home', label: t('nav.today'), icon: 'activity' },
-    { id: 'review', label: t('nav.review'), icon: 'target' },
-    { id: 'dna', label: t('nav.dna'), icon: 'aperture' },
+    { id: 'home', label: t('nav.today'), icon: 'home' },
+    { id: 'review', label: t('nav.review'), icon: 'file-text' },
     { id: 'prepMap', label: t('nav.prepMap'), icon: 'map' },
-    { id: 'exams', label: t('nav.exams'), icon: 'calendar' },
-    { id: 'settings', label: t('nav.settings'), icon: 'sliders' },
+    { id: 'classrooms', label: t('nav.classrooms'), icon: 'users' },
+    { id: 'settings', label: t('nav.settings'), icon: 'user' },
   ];
   return (
     <View style={styles.shell}>

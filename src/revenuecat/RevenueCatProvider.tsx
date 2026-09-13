@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
+import { useAuth } from '../auth';
 import { trackEvent } from '../analytics';
 import { EntitlementsProvider } from '../entitlements';
 import { revenueCatClient } from './client';
@@ -20,6 +21,7 @@ type RevenueCatContextValue = RevenueCatState & {
 const RevenueCatContext = createContext<RevenueCatContextValue | null>(null);
 
 export function RevenueCatProvider({ children }: { children: ReactNode }) {
+  const { account } = useAuth();
   const config = useMemo(() => resolveRevenueCatConfig(
     Platform.OS,
     typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production',
@@ -41,6 +43,11 @@ export function RevenueCatProvider({ children }: { children: ReactNode }) {
     service.initialize();
     return () => { unsubscribe(); service.destroy(); };
   }, [service]);
+
+  useEffect(() => {
+    if (state.status !== 'ready') return;
+    service.syncIdentity(account && !account.isAnonymous ? account.id : null);
+  }, [account, service, state.status]);
 
   const selectPackage = useCallback((packageId: string) => {
       const selected = service.getState().packages.find((item) => item.id === packageId);

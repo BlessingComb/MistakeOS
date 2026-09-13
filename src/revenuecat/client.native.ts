@@ -71,6 +71,8 @@ export const revenueCatClient: RevenueCatClient = {
     Purchases.configure({ apiKey: config.apiKey });
     configured = true;
   },
+  async logIn(appUserId: string) { await Purchases.logIn(appUserId); },
+  async logOut() { await Purchases.logOut(); },
   async getCustomerInfo() {
     return customerInfoSnapshot(await Purchases.getCustomerInfo());
   },

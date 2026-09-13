@@ -11,8 +11,15 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
-import { Animated, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Pressable, SafeAreaView, Share, StyleSheet, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import Reanimated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { BrandMark } from './src/components/BrandMark';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
+import { AuthProvider, useAuth } from './src/auth';
+import { trackEvent } from './src/analytics';
 import { TabBar, TabId } from './src/components/TabBar';
 import { I18nProvider, useTranslation } from './src/i18n';
 import { MistakeFormScreen } from './src/mistakes';
@@ -25,19 +32,28 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { ProScreen } from './src/screens/ProScreen';
 import { ReviewScreen } from './src/screens/ReviewScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { AccountScreen } from './src/screens/AccountScreen';
+import { ClassroomsScreen } from './src/screens/ClassroomsScreen';
+import { LegalScreen } from './src/screens/LegalScreen';
 import { AppDataProvider, useAppData } from './src/state';
 import { RevenueCatProvider } from './src/revenuecat';
-import { animationDriver, colors, createThemedStyles, motion, type } from './src/theme';
+import { animationDriver, colors, createThemedStyles, motion, radius, spacing, type } from './src/theme';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+
+const INTRO_KEY = '@mistakeos/intro:v1';
 
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <I18nProvider>
         <ThemeProvider>
-          <RevenueCatProvider>
-            <AppDataProvider><MistakeApp /></AppDataProvider>
-          </RevenueCatProvider>
+          <AppErrorBoundary fallback={(retry) => <FatalErrorScreen onRetry={retry} />}>
+            <AuthProvider>
+              <RevenueCatProvider>
+                <AppDataProvider><MistakeApp /></AppDataProvider>
+              </RevenueCatProvider>
+            </AuthProvider>
+          </AppErrorBoundary>
         </ThemeProvider>
       </I18nProvider>
     </GestureHandlerRootView>
@@ -46,7 +62,8 @@ export default function App() {
 
 function MistakeApp() {
   const { mode } = useTheme();
-  const { onboarding, mistakes, exams, reviewEvidence, completeOnboarding, skipOnboarding, resetOnboarding, addMistake, addExam, removeExam, recordNeverAgainReview } = useAppData();
+  const auth = useAuth();
+  const { onboarding, mistakes, exams, reviewEvidence, officialExamPrep, selectExamTarget, reloadExamPrep, photoUsage, consumePhotoSlot, completeOnboarding, skipOnboarding, resetOnboarding, addMistake, addExam, removeExam, recordNeverAgainReview, clearPersonalData } = useAppData();
   const [fontsLoaded] = useFonts({
     Nunito_400Regular,
     Nunito_500Medium,
@@ -62,8 +79,14 @@ function MistakeApp() {
   const [showMistakeForm, setShowMistakeForm] = useState(false);
   const [mistakeSource, setMistakeSource] = useState<'onboarding' | 'home'>('home');
   const [showPro, setShowPro] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
+  const [legalDocument, setLegalDocument] = useState<'privacy' | 'terms' | 'support' | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [reviewSubject, setReviewSubject] = useState<SubjectId | null>(null);
   const [onboardingSource, setOnboardingSource] = useState<'first_launch' | 'settings_reset'>('first_launch');
+  const [introReady, setIntroReady] = useState(false);
+  const [introFirst, setIntroFirst] = useState(true);
+  useEffect(() => { let mounted = true; AsyncStorage.getItem(INTRO_KEY).then((value) => { if (!mounted) return; setIntroFirst(!value); setIntroReady(true); }).catch(() => mounted && setIntroReady(true)); return () => { mounted = false; }; }, []);
 
   const switchTab = (tab: TabId) => {
     if (tab === activeTab) return;
@@ -78,9 +101,25 @@ function MistakeApp() {
     switchTab('review');
   };
 
-  if (!fontsLoaded) return <LoadingScreen />;
+  if (!fontsLoaded || !introReady) return <LoadingScreen />;
+  if (introFirst) return <IntroSplash onDone={() => { AsyncStorage.setItem(INTRO_KEY, 'seen').catch(() => undefined); setIntroFirst(false); }} />;
 
-  if (!onboarding) {
+  // A configured, signed-out build starts with account creation. If Supabase is
+  // unavailable, retain the local-first flow so the app never becomes unusable.
+  if (auth.status === 'loading') return <LoadingScreen />;
+  if (auth.passwordRecovery) {
+    return <SafeAreaView style={styles.safe}><StatusBar style={mode === 'dark' ? 'light' : 'dark'} /><AccountScreen onAccountDeleted={clearPersonalData} /></SafeAreaView>;
+  }
+  if (auth.status === 'ready' && !auth.account) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+        <AccountScreen lockedToSignUp />
+      </SafeAreaView>
+    );
+  }
+
+  if (showOnboarding) {
     return (
       <SafeAreaView style={styles.safe}>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
@@ -88,12 +127,16 @@ function MistakeApp() {
           source={onboardingSource}
           onComplete={async (answers, action) => {
             await completeOnboarding(answers);
+            setShowOnboarding(false);
             if (action === 'add') {
               setMistakeSource('onboarding');
               setShowMistakeForm(true);
             }
           }}
-          onSkip={skipOnboarding}
+          onSkip={async (stage) => {
+            await skipOnboarding(stage);
+            setShowOnboarding(false);
+          }}
         />
       </SafeAreaView>
     );
@@ -104,7 +147,9 @@ function MistakeApp() {
       <SafeAreaView style={styles.safe}>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
         <MistakeFormScreen
-          defaultSubjects={onboarding.answers.subjects}
+          defaultSubjects={onboarding?.answers.subjects ?? []}
+          photoUsage={photoUsage}
+          onConsumePhotoSlot={consumePhotoSlot}
           onCancel={() => { setShowMistakeForm(false); setActiveTab('home'); }}
           onOpenPro={() => { setShowMistakeForm(false); setShowPro(true); }}
           onSave={async (draft) => {
@@ -121,6 +166,14 @@ function MistakeApp() {
     return <SafeAreaView style={styles.safe}><StatusBar style={mode === 'dark' ? 'light' : 'dark'} /><ProScreen onBack={() => setShowPro(false)} /></SafeAreaView>;
   }
 
+  if (showAccount) {
+    return <SafeAreaView style={styles.safe}><StatusBar style={mode === 'dark' ? 'light' : 'dark'} /><AccountScreen onBack={() => setShowAccount(false)} onAccountDeleted={clearPersonalData} /></SafeAreaView>;
+  }
+
+  if (legalDocument) {
+    return <SafeAreaView style={styles.safe}><StatusBar style={mode === 'dark' ? 'light' : 'dark'} /><LegalScreen document={legalDocument} onBack={() => setLegalDocument(null)} /></SafeAreaView>;
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
@@ -128,26 +181,40 @@ function MistakeApp() {
       <Animated.View style={[styles.content, { opacity }]}>
         {activeTab === 'home' && (
           <HomeScreen
-            mistakes={mistakes}
-            initialProfile={onboarding.profile}
-            exams={exams}
-            reviewEvidence={reviewEvidence}
+            officialExamPrep={officialExamPrep}
             onLogMistake={() => { setMistakeSource('home'); setShowMistakeForm(true); }}
             onDna={() => switchTab('dna')}
-            onStartReview={openTopicReview}
             onOpenPrepMap={() => switchTab('prepMap')}
+            onOpenExams={() => switchTab('exams')}
+            onOpenClassrooms={() => switchTab('classrooms')}
+            onOpenReview={() => switchTab('review')}
           />
         )}
         {activeTab === 'review' && <ReviewScreen mistakes={mistakes} initialSubject={reviewSubject} onCompleteReview={recordNeverAgainReview} onDone={() => { setReviewSubject(null); switchTab('home'); }} onExit={() => { setReviewSubject(null); switchTab('home'); }} />}
-        {activeTab === 'dna' && <DnaScreen mistakes={mistakes} initialProfile={onboarding.profile} />}
-        {activeTab === 'prepMap' && <ExamPrepMapScreen exams={exams} mistakes={mistakes} reviewEvidence={reviewEvidence} onOpenExams={() => switchTab('exams')} onAddMistake={() => { setMistakeSource('home'); setShowMistakeForm(true); }} onStartReview={openTopicReview} />}
+        {activeTab === 'dna' && <DnaScreen mistakes={mistakes} initialProfile={onboarding?.profile ?? null} />}
+        {activeTab === 'prepMap' && <ExamPrepMapScreen exams={exams} mistakes={mistakes} reviewEvidence={reviewEvidence} officialExamPrep={officialExamPrep} onSelectExamTarget={selectExamTarget} onReloadExamPrep={reloadExamPrep} onOpenExams={() => switchTab('exams')} onAddMistake={() => { setMistakeSource('home'); setShowMistakeForm(true); }} onStartReview={openTopicReview} />}
         {activeTab === 'exams' && <ExamsScreen exams={exams} onSave={addExam} onRemove={removeExam} onOpenPrepMap={() => switchTab('prepMap')} />}
+        {activeTab === 'classrooms' && <ClassroomsScreen catalogs={officialExamPrep.catalogs} />}
         {activeTab === 'settings' && (
           <SettingsScreen
             onOpenPro={() => setShowPro(true)}
+            onOpenAccount={() => { trackEvent('account_screen_viewed', { source: 'settings' }); setShowAccount(true); }}
+            onOpenLegal={setLegalDocument}
+            onExportData={async () => {
+              try {
+                await Share.share({
+                  title: 'MistakeOS data export',
+                  message: JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), onboarding, mistakes, exams, reviewEvidence }, null, 2),
+                });
+                return true;
+              } catch {
+                return false;
+              }
+            }}
             onResetOnboarding={async () => {
               setOnboardingSource('settings_reset');
               await resetOnboarding();
+              setShowOnboarding(true);
             }}
           />
         )}
@@ -157,23 +224,59 @@ function MistakeApp() {
   );
 }
 
+function IntroSplash({ onDone }: { onDone: () => void }) {
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [text, setText] = useState('M•••••••');
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.96);
+  useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => undefined); }, []);
+  useEffect(() => {
+    if (reduceMotion) { setText('MistakeOS'); opacity.value = withTiming(1, { duration: 180 }); const timer = setTimeout(onDone, 420); return () => clearTimeout(timer); }
+    const target = 'MistakeOS'; const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let step = 0;
+    opacity.value = withTiming(1, { duration: 220 }); scale.value = withTiming(1, { duration: 520 });
+    const timer = setInterval(() => { step += 1; setText(target.split('').map((char, index) => index < step ? char : chars[(step * 7 + index * 3) % chars.length]).join('')); if (step >= target.length) { clearInterval(timer); Haptics.selectionAsync().catch(() => undefined); setTimeout(onDone, 520); } }, 72);
+    return () => clearInterval(timer);
+  }, [reduceMotion]);
+  const markStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ scale: scale.value }] }));
+  return <LinearGradient colors={[colors.canvas, colors.nav, colors.black]} style={introStyles.root}><View style={introStyles.glowOne} /><View style={introStyles.glowTwo} /><Reanimated.View entering={FadeIn.duration(300)} style={introStyles.center}><Reanimated.Text style={[introStyles.wordmark, markStyle]}>{text}</Reanimated.Text></Reanimated.View></LinearGradient>;
+}
+
+const introStyles = StyleSheet.create({ root: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }, center: { alignItems: 'center' }, wordmark: { color: '#F6F8FC', fontFamily: type.extraBold, fontSize: 42, letterSpacing: -2 }, glowOne: { position: 'absolute', width: 300, height: 300, borderRadius: 180, backgroundColor: '#B35CFF', opacity: 0.12, top: -120, right: -120 }, glowTwo: { position: 'absolute', width: 260, height: 260, borderRadius: 180, backgroundColor: '#00D8F4', opacity: 0.08, bottom: -120, left: -110 } });
+
 function LoadingScreen() {
-  const { t } = useTranslation();
   const [pulse] = useState(() => new Animated.Value(0.55));
 
   useEffect(() => {
-    Animated.loop(Animated.sequence([
+    const animation = Animated.loop(Animated.sequence([
       Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: animationDriver }),
       Animated.timing(pulse, { toValue: 0.55, duration: 600, useNativeDriver: animationDriver }),
-    ])).start();
+    ]));
+    animation.start();
+    return () => animation.stop();
   }, [pulse]);
 
   return (
     <View style={styles.loading}>
       <Animated.View style={{ opacity: pulse }}><BrandMark inverse /></Animated.View>
-      <Text style={styles.loadingText}>{t('loading.calibrating')}</Text>
     </View>
   );
+}
+
+function FatalErrorScreen({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <SafeAreaView style={styles.fatal}>
+      <StatusBar style="light" />
+      <BrandMark inverse />
+      <Text accessibilityRole="alert" style={styles.fatalTitle}>{t('common.unexpectedError')}</Text>
+      <Text style={styles.fatalBody}>{t('common.unexpectedErrorBody')}</Text>
+      <AnimatedSubmitButton label={t('common.tryAgain')} onPress={onRetry} />
+    </SafeAreaView>
+  );
+}
+
+function AnimatedSubmitButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.fatalButton}><Text style={styles.fatalButtonText}>{label}</Text></Pressable>;
 }
 
 function AmbientField() {
@@ -188,7 +291,7 @@ function AmbientField() {
 }
 
 const styles = createThemedStyles((colors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.canvas },
+  safe: { flex: 1, backgroundColor: colors.canvas, userSelect: 'none' },
   content: { flex: 1 },
   ambientField: { pointerEvents: 'none' },
   loading: { flex: 1, backgroundColor: colors.canvas, alignItems: 'center', justifyContent: 'center', gap: 18 },
@@ -197,4 +300,9 @@ const styles = createThemedStyles((colors) => StyleSheet.create({
   ambientTwo: { position: 'absolute', width: 330, height: 330, borderRadius: 200, borderWidth: 1, borderColor: colors.signal, opacity: 0.1, bottom: 72, left: -230 },
   gridLineOne: { position: 'absolute', width: 1, top: 0, bottom: 0, left: '8%', backgroundColor: colors.line, opacity: 0.28 },
   gridLineTwo: { position: 'absolute', width: 1, top: 0, bottom: 0, right: '8%', backgroundColor: colors.line, opacity: 0.28 },
+  fatal: { flex: 1, padding: spacing.xl, backgroundColor: colors.canvas, justifyContent: 'center', alignItems: 'center' },
+  fatalTitle: { color: colors.ink, fontFamily: type.extraBold, fontSize: 28, letterSpacing: -1, textAlign: 'center', marginTop: spacing.xl },
+  fatalBody: { color: colors.muted, fontFamily: type.regular, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: spacing.sm, maxWidth: 360 },
+  fatalButton: { minHeight: 48, minWidth: 160, borderRadius: radius.md, backgroundColor: colors.signal, justifyContent: 'center', alignItems: 'center', marginTop: spacing.xl },
+  fatalButtonText: { color: colors.onAccent, fontFamily: type.bold, fontSize: 14, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
 }));

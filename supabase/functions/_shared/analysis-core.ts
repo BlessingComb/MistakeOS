@@ -3,7 +3,7 @@ export const PROVIDER = 'groq';
 export const DEFAULT_MODEL = 'qwen/qwen3.6-27b';
 export const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 export const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
-export type AnalysisErrorCode = 'UNAUTHORIZED'|'INVALID_IMAGE'|'IMAGE_TOO_LARGE'|'AI_LIMIT_REACHED'|'RATE_LIMITED'|'DUPLICATE_IN_PROGRESS'|'AI_PROVIDER_TIMEOUT'|'AI_PROVIDER_ERROR'|'INVALID_AI_RESPONSE'|'INTERNAL_ERROR'|'NOT_CONFIGURED';
+export type AnalysisErrorCode = 'UNAUTHORIZED'|'INVALID_IMAGE'|'IMAGE_TOO_LARGE'|'AI_LIMIT_REACHED'|'RATE_LIMITED'|'DUPLICATE_IN_PROGRESS'|'AI_PROVIDER_TIMEOUT'|'AI_PROVIDER_ERROR'|'INVALID_AI_RESPONSE'|'PERSISTENCE_RETRYABLE'|'INTERNAL_ERROR'|'NOT_CONFIGURED';
 export type ValidatedRequest = { requestId:string; image:{base64:string;mimeType:string}; locale:'en'|'pt-BR'; context?:{examId?:string;subjectHint?:string;topicHint?:string} };
 export type NormalizedAnalysis={status:'identified'|'insufficient';transcription:string;errorSummary:string;explanation:string;correctionSteps:string[];suggestedSubject:string;topic:string;suggestedCause:string;errorType:string;repairRule:string;confidence:'low'|'medium'|'high';model:string;analyzedAt:string};
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i; const BASE64=/^[A-Za-z0-9+/]+={0,2}$/;

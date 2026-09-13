@@ -1,6 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { useAuth } from '../auth';
 import { AppLanguage, useTranslation, type TranslationKey } from '../i18n';
 import { useRevenueCat, type RevenueCatNotice } from '../revenuecat';
 import { colors, createThemedStyles, radius, spacing, type, type ThemeMode } from '../theme';
@@ -17,17 +19,26 @@ const noticeKeys: Record<RevenueCatNotice, TranslationKey> = {
   manage_error: 'pro.manageError',
 };
 
-type Props = { onResetOnboarding: () => Promise<void>; onOpenPro: () => void };
+type Props = { onResetOnboarding: () => Promise<void>; onOpenPro: () => void; onOpenAccount: () => void; onOpenLegal: (document: 'privacy' | 'terms' | 'support') => void; onExportData: () => Promise<boolean> };
 
-export function SettingsScreen({ onResetOnboarding, onOpenPro }: Props) {
+export function SettingsScreen({ onResetOnboarding, onOpenPro, onOpenAccount, onOpenLegal, onExportData }: Props) {
   const { t, language, setLanguage } = useTranslation();
   const { mode, setMode } = useTheme();
   const revenueCat = useRevenueCat();
+  const auth = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportNotice, setExportNotice] = useState<TranslationKey | null>(null);
   const subscriptionStatus = revenueCat.status === 'loading'
     ? t('settings.proChecking')
     : revenueCat.subscriptionLevel === 'pro'
       ? t('settings.proActive')
       : t('settings.proFree');
+  const accountStatus = auth.status === 'loading'
+    ? t('settings.accountChecking')
+    : auth.account && !auth.account.isAnonymous
+      ? t('settings.accountSignedIn')
+      : t('settings.accountLocal');
 
   const chooseLanguage = (nextLanguage: AppLanguage) => {
     if (nextLanguage === language) return;
@@ -39,7 +50,6 @@ export function SettingsScreen({ onResetOnboarding, onOpenPro }: Props) {
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       <View style={styles.screen}>
         <View style={styles.topLine}>
-          <Text style={styles.overline}>{t('settings.overline')}</Text>
           <Feather name="sliders" size={20} color={colors.ink} />
         </View>
 
@@ -118,6 +128,46 @@ export function SettingsScreen({ onResetOnboarding, onOpenPro }: Props) {
         <View style={styles.utilitySection}>
           <View style={styles.subscriptionHead}>
             <View style={styles.utilityCopy}>
+              <Text style={styles.utilityTitle}>{t('settings.account')}</Text>
+              <Text style={styles.subscriptionStatus}>{accountStatus}</Text>
+            </View>
+            <View style={[styles.subscriptionDot, auth.account && !auth.account.isAnonymous && styles.subscriptionDotActive]} />
+          </View>
+          <View style={styles.utilityCopy}>
+            <Text style={styles.utilityBody}>{t('settings.accountBody')}</Text>
+          </View>
+          <Pressable accessibilityRole="button" onPress={onOpenAccount} style={styles.utilityButton}>
+            <Text style={styles.utilityButtonText}>{t(auth.account && !auth.account.isAnonymous ? 'settings.manageAccount' : 'settings.openAccount')}</Text>
+            <Feather name="arrow-up-right" size={17} color={colors.onAccent} />
+          </Pressable>
+          {auth.account && !auth.account.isAnonymous && <Pressable accessibilityRole="button" disabled={signingOut} onPress={async () => { setSigningOut(true); await auth.signOut(); setSigningOut(false); }} style={[styles.signOutButton, signingOut && styles.disabled]}><Feather name="log-out" size={16} color={colors.riskDeep} /><Text style={styles.signOutText}>{signingOut ? t('account.signingOut') : t('account.signOut')}</Text></Pressable>}
+        </View>
+
+        <View style={styles.utilitySection}>
+          <View style={styles.utilityCopy}>
+            <Text style={styles.utilityTitle}>{t('settings.yourData')}</Text>
+            <Text style={styles.utilityBody}>{t('settings.yourDataBody')}</Text>
+          </View>
+          {exportNotice && <Text style={exportNotice === 'settings.exportError' ? styles.unavailableText : styles.subscriptionStatus}>{t(exportNotice)}</Text>}
+          <Pressable accessibilityRole="button" disabled={exporting} onPress={async () => { setExporting(true); setExportNotice(null); const shared = await onExportData(); setExporting(false); setExportNotice(shared ? 'settings.exportReady' : 'settings.exportError'); }} style={[styles.outlineButton, exporting && styles.disabled]}>
+            <Feather name="download" size={16} color={colors.ink} />
+            <Text style={styles.outlineButtonText}>{t(exporting ? 'settings.exporting' : 'settings.exportData')}</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.utilitySection}>
+          <View style={styles.utilityCopy}>
+            <Text style={styles.utilityTitle}>{t('settings.legal')}</Text>
+            <Text style={styles.utilityBody}>{t('settings.legalBody')}</Text>
+          </View>
+          <Pressable accessibilityRole="button" onPress={() => onOpenLegal('privacy')} style={styles.outlineButton}><Text style={styles.outlineButtonText}>{t('settings.privacyPolicy')}</Text><Feather name="arrow-up-right" size={16} color={colors.ink} /></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => onOpenLegal('terms')} style={styles.outlineButton}><Text style={styles.outlineButtonText}>{t('settings.termsOfService')}</Text><Feather name="arrow-up-right" size={16} color={colors.ink} /></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => onOpenLegal('support')} style={styles.outlineButton}><Text style={styles.outlineButtonText}>{t('settings.helpSupport')}</Text><Feather name="arrow-up-right" size={16} color={colors.ink} /></Pressable>
+        </View>
+
+        <View style={styles.utilitySection}>
+          <View style={styles.subscriptionHead}>
+            <View style={styles.utilityCopy}>
               <Text style={styles.utilityTitle}>{t('settings.pro')}</Text>
               <Text style={styles.subscriptionStatus}>{subscriptionStatus}</Text>
             </View>
@@ -161,7 +211,10 @@ export function SettingsScreen({ onResetOnboarding, onOpenPro }: Props) {
           <Text style={styles.productTitle}>{t('settings.translationLayer')}</Text>
           <Text style={styles.productBody}>{t('settings.preservedNamesBody')}</Text>
           <View style={styles.namesRail}>
-            {['Risk Score', 'Mistake DNA', 'Never Again', language === 'pt-BR' ? 'Mapa de Preparação' : 'Exam Prep Map'].map((name) => (
+            {(language === 'pt-BR'
+              ? ['Índice de Risco', 'DNA dos Erros', 'Quebre o Padrão', 'Preparação para Provas']
+              : ['Risk Score', 'Mistake DNA', 'Never Again', 'Exam Prep Map']
+            ).map((name) => (
               <View key={name} style={styles.namePill}><Text style={styles.namePillText}>{name}</Text></View>
             ))}
           </View>
@@ -221,6 +274,9 @@ const styles = createThemedStyles((colors) => StyleSheet.create({
   subscriptionNoticeText: { color: colors.ink, fontFamily: type.semibold, fontSize: 11, lineHeight: 17, flex: 1 },
   restoreButton: { minHeight: 48, borderRadius: radius.md, borderWidth: 1, borderColor: colors.ink, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   restoreButtonText: { color: colors.ink, fontFamily: type.bold, fontSize: 12 },
+  signOutButton: { minHeight: 46, marginTop: spacing.sm, borderRadius: radius.md, borderWidth: 1, borderColor: colors.risk, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: spacing.xs },
+  signOutText: { color: colors.riskDeep, fontFamily: type.bold, fontSize: 12 },
+  disabled: { opacity: 0.5 },
   outlineButton: { minHeight: 54, borderRadius: radius.md, borderWidth: 1, borderColor: colors.ink, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   outlineButtonText: { color: colors.ink, fontFamily: type.bold, fontSize: 13 },
   productLanguage: { backgroundColor: colors.nav, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.darkLine, padding: spacing.lg, marginTop: spacing.xxl },

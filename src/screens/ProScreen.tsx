@@ -74,7 +74,6 @@ export function ProScreen({ onBack }: { onBack: () => void }) {
           </View>
 
           <View style={styles.hero}>
-            <Text style={styles.overline}>{t('pro.overline')}</Text>
             <Text style={styles.title}>{t('pro.title')}</Text>
             <Text style={styles.body}>{t('pro.body')}</Text>
           </View>

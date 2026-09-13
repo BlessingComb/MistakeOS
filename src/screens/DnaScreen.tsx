@@ -17,7 +17,7 @@ export function DnaScreen({ mistakes, initialProfile }: Props) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       <View style={styles.screen}>
-        <View style={styles.topLine}><Text style={styles.overline}>{t('dna.overline')}</Text><Feather name="aperture" size={20} color={colors.ink} /></View>
+        <View style={styles.topLine}><Feather name="aperture" size={20} color={colors.ink} /></View>
         <Text style={styles.title}>{t('dna.title').replace(' ', '\n')}</Text>
         <Text style={styles.lead}>{t('dna.lead')}</Text>
 
@@ -69,7 +69,7 @@ function aggregateCauses(mistakes: readonly MistakeRecord[]): [CauseId, number][
 const styles = createThemedStyles((colors) => StyleSheet.create({
   scroll: { paddingBottom: 116 },
   screen: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
-  topLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.ink },
+  topLine: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.ink },
   overline: { color: colors.muted, fontFamily: type.monoBold, fontSize: 9, letterSpacing: 1.3 },
   title: { color: colors.ink, fontFamily: type.extraBold, fontSize: 62, lineHeight: 56, letterSpacing: -3.5, marginTop: spacing.xl },
   lead: { color: colors.muted, fontFamily: type.regular, fontSize: 15, lineHeight: 23, maxWidth: 540, marginTop: spacing.lg },

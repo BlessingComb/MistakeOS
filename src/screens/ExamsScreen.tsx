@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ExamDraft, ExamRecord } from '../exams';
 import { useTranslation } from '../i18n';
 import { SUBJECT_OPTIONS, SubjectId } from '../onboarding';
@@ -24,20 +24,40 @@ export function ExamsScreen({ exams, onSave, onRemove, onOpenPrepMap }: Props) {
   const [subject, setSubject] = useState<SubjectId>('mathematics');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<"save" | "remove" | null>(null);
 
   const days = useMemo(() => calendarDays(month), [month]);
   const weekdays = useMemo(() => Array.from({ length: 7 }, (_, index) => formatDate(new Date(2023, 0, 1 + index), { weekday: 'narrow' })), [formatDate]);
   const save = async () => {
     if (saving) return;
     setSaving(true);
-    await onSave({ date: selectedDate, subject, notes });
-    setNotes('');
-    setSaving(false);
+    setOperationError(null);
+    try {
+      await onSave({ date: selectedDate, subject, notes });
+      setNotes('');
+    } catch {
+      setOperationError('save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (exam: ExamRecord) => {
+    if (removingId) return;
+    setRemovingId(exam.id);
+    setOperationError(null);
+    try {
+      await onRemove(exam);
+    } catch {
+      setOperationError('remove');
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.overline}>{t('exams.overline')}</Text>
       <Text style={styles.title}>{t('exams.title')}</Text>
       <Text style={styles.body}>{t('exams.body')}</Text>
 
@@ -78,14 +98,16 @@ export function ExamsScreen({ exams, onSave, onRemove, onOpenPrepMap }: Props) {
         </View>
         <Text style={[styles.fieldLabel, styles.notesLabel]}>{t('exams.notes')}</Text>
         <TextInput value={notes} onChangeText={setNotes} placeholder={t('exams.notesPlaceholder')} placeholderTextColor={colors.faint} multiline textAlignVertical="top" style={styles.notes} />
-        <Pressable accessibilityRole="button" onPress={save} style={({ pressed }) => [styles.saveButton, pressed && styles.pressed, saving && styles.disabled]}>
-          <Text style={styles.saveText}>{t('exams.save')}</Text><Feather name="arrow-up-right" size={18} color={colors.onAccent} />
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: saving }} disabled={saving} onPress={save} style={({ pressed }) => [styles.saveButton, pressed && styles.pressed, saving && styles.disabled]}>
+          <Text style={styles.saveText}>{saving ? t('exams.saving') : t('exams.save')}</Text><Feather name="arrow-up-right" size={18} color={colors.onAccent} />
           <Text style={styles.saveMeta}>{t('exams.saveMeta')}</Text>
         </Pressable>
+        {operationError === 'save' && <Text accessibilityRole="alert" style={styles.operationError}>{t('exams.saveError')}</Text>}
       </View>
 
       <View style={styles.timelineHeader}><Text style={styles.timelineTitle}>{t('exams.upcoming')}</Text><Text style={styles.timelineCount}>{exams.length}</Text></View>
-      {exams.length === 0 ? <View style={styles.empty}><Feather name="calendar" size={21} color={colors.signal} /><Text style={styles.emptyTitle}>{t('exams.emptyTitle')}</Text><Text style={styles.emptyBody}>{t('exams.emptyBody')}</Text></View> : exams.map((exam) => <ExamItem key={exam.id} exam={exam} today={today} onRemove={onRemove} onOpenPrepMap={onOpenPrepMap} />)}
+      {exams.length === 0 ? <View style={styles.empty}><Feather name="calendar" size={21} color={colors.signal} /><Text style={styles.emptyTitle}>{t('exams.emptyTitle')}</Text><Text style={styles.emptyBody}>{t('exams.emptyBody')}</Text></View> : exams.map((exam) => <ExamItem key={exam.id} exam={exam} today={today} removing={removingId === exam.id} onRemove={remove} onOpenPrepMap={onOpenPrepMap} />)}
+      {operationError === 'remove' && <Text accessibilityRole="alert" style={styles.operationError}>{t('exams.removeError')}</Text>}
     </ScrollView>
   );
 }
@@ -94,7 +116,7 @@ function CalendarButton({ icon, label, onPress }: { icon: 'chevron-left' | 'chev
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.monthButton, pressed && styles.pressed]}><Feather name={icon} size={19} color={colors.ink} /></Pressable>;
 }
 
-function ExamItem({ exam, today, onRemove, onOpenPrepMap }: { exam: ExamRecord; today: Date; onRemove: (exam: ExamRecord) => Promise<void>; onOpenPrepMap: () => void }) {
+function ExamItem({ exam, today, removing, onRemove, onOpenPrepMap }: { exam: ExamRecord; today: Date; removing: boolean; onRemove: (exam: ExamRecord) => Promise<void>; onOpenPrepMap: () => void }) {
   const { t, formatDate } = useTranslation();
   const target = parseDate(exam.date);
   const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
@@ -104,7 +126,7 @@ function ExamItem({ exam, today, onRemove, onOpenPrepMap }: { exam: ExamRecord; 
   return <View style={styles.examItem}>
     <View style={styles.examDate}><Text style={styles.examDay}>{target.getDate()}</Text><Text style={styles.examMonth}>{formatDate(target, { month: 'short' }).replace('.', '').toUpperCase()}</Text></View>
     <View style={styles.examCopy}><Text style={styles.examSubject}>{t(subject?.labelKey ?? 'onboarding.subject.other')}</Text><Text style={styles.examCountdown}>{countdown}</Text>{exam.notes ? <Text style={styles.examNotes}>{exam.notes}</Text> : null}<Pressable accessibilityRole="button" onPress={onOpenPrepMap} style={styles.prepMapButton}><Text style={styles.prepMapButtonText}>{t('exams.openPrepMap')}</Text><Feather name="map" size={12} color={colors.signal} /></Pressable></View>
-    <Pressable accessibilityRole="button" accessibilityLabel={t('exams.delete')} onPress={() => onRemove(exam)} hitSlop={10} style={styles.delete}><Feather name="trash-2" size={16} color={colors.faint} /></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('exams.delete')} accessibilityState={{ disabled: removing }} disabled={removing} onPress={() => Alert.alert(t('exams.deleteTitle'), t('exams.deleteBody'), [{ text: t('exams.deleteCancel'), style: 'cancel' }, { text: t('exams.deleteConfirm'), style: 'destructive', onPress: () => { void onRemove(exam); } }])} hitSlop={10} style={[styles.delete, removing && styles.disabled]}><Feather name="trash-2" size={16} color={colors.faint} /></Pressable>
   </View>;
 }
 
@@ -136,4 +158,5 @@ const styles = createThemedStyles((colors) => StyleSheet.create({
   timelineHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xxl, marginBottom: spacing.sm }, timelineTitle: { color: colors.ink, fontFamily: type.extraBold, fontSize: 20, letterSpacing: -0.7 }, timelineCount: { color: colors.signal, fontFamily: type.extraBold, fontSize: 18 }, empty: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper, padding: spacing.lg }, emptyTitle: { color: colors.ink, fontFamily: type.bold, fontSize: 16, marginTop: spacing.sm }, emptyBody: { color: colors.muted, fontFamily: type.regular, fontSize: 12, lineHeight: 18, marginTop: 4 },
   examItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper, padding: spacing.md, marginBottom: spacing.sm }, examDate: { width: 50, minHeight: 56, borderRadius: radius.md, backgroundColor: colors.nav, alignItems: 'center', justifyContent: 'center' }, examDay: { color: colors.onDark, fontFamily: type.extraBold, fontSize: 22, lineHeight: 24 }, examMonth: { color: colors.signal, fontFamily: type.monoBold, fontSize: 7, letterSpacing: 0.6 }, examCopy: { flex: 1 }, examSubject: { color: colors.ink, fontFamily: type.bold, fontSize: 15 }, examCountdown: { color: colors.signal, fontFamily: type.monoBold, fontSize: 7, letterSpacing: 0.7, marginTop: 3 }, examNotes: { color: colors.muted, fontFamily: type.regular, fontSize: 11, lineHeight: 15, marginTop: 5 }, prepMapButton: { alignSelf: 'flex-start', minHeight: 28, flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: spacing.sm }, prepMapButtonText: { color: colors.signal, fontFamily: type.bold, fontSize: 10 }, delete: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.72 }, disabled: { opacity: 0.55 },
+  operationError: { color: colors.risk, fontFamily: type.semibold, fontSize: 12, lineHeight: 18, marginTop: spacing.sm },
 }));

@@ -1,8 +1,10 @@
 import '@supabase/functions-js/edge-runtime.d.ts';
 import { withSupabase } from '@supabase/server';
 import { DEFAULT_MODEL, estimatedCost, FEATURE, normalizeProviderAnalysis, PROVIDER, validateAnalysisRequest, confidenceNumber, type AnalysisErrorCode, type ValidatedRequest } from '../_shared/analysis-core.ts';
+import { MISTAKE_INTERPRETATION_ROUTE, sanitizeAiErrorCode } from '../_shared/ai-observability.ts';
+import { AnalysisFinalizationError, runAnalysisLifecycle } from '../_shared/analysis-lifecycle.ts';
 
-type Json=Record<string,unknown>; type RpcResult={state?:string;used?:number;limit?:number;remaining?:number;level?:string;result?:unknown};
+type Json=Record<string,unknown>; type RpcResult={state?:string;used?:number;limit?:number;remaining?:number;level?:string;result?:unknown;attempt?:number};
 export default { fetch:withSupabase({auth:'user'},async(req,ctx)=>{
   if(req.method!=='POST')return errorResponse('INVALID_IMAGE',405);
   if(ctx.jwtClaims?.is_anonymous===true)return errorResponse('UNAUTHORIZED',401);
@@ -12,19 +14,42 @@ export default { fetch:withSupabase({auth:'user'},async(req,ctx)=>{
   const model=Deno.env.get('GROQ_MODEL')?.trim()||DEFAULT_MODEL;
   const {data:reservation,error:reservationError}=await ctx.supabaseAdmin.rpc('reserve_ai_analysis',{p_user_id:userId,p_request_id:input.value.requestId,p_feature:FEATURE,p_provider:PROVIDER,p_model:model});
   if(reservationError)return errorResponse('INTERNAL_ERROR',500); const reserved=reservation as RpcResult;
-  if(reserved.state==='completed')return Response.json({...((reserved.result??{}) as Json),usage:{usedThisMonth:reserved.used,monthlyLimit:reserved.limit,remaining:reserved.remaining}});
+  if(reserved.state==='completed')return Response.json({...((reserved.result??{}) as Json),usage:{usedToday:reserved.used,dailyLimit:reserved.limit,remaining:reserved.remaining}});
   if(reserved.state==='pending')return errorResponse('DUPLICATE_IN_PROGRESS',409);
   if(reserved.state==='limit_reached')return Response.json({code:'AI_LIMIT_REACHED',used:reserved.used,limit:reserved.limit,remaining:0},{status:429});
   if(reserved.state==='rate_limited')return errorResponse('RATE_LIMITED',429);
   if(reserved.state!=='reserved')return errorResponse('INTERNAL_ERROR',500);
+  const providerStartedAt=performance.now();
+  const attempt=typeof reserved.attempt==='number'?reserved.attempt:1;
+  let provider:Awaited<ReturnType<typeof callGroq>>|null=null;
+  let providerFailureCode:AnalysisErrorCode|null=null;
+  let responseResult:Json|null=null;
   try{
-    const provider=await callGroq(input.value,apiKey,model); const normalized=normalizeProviderAnalysis(provider.analysis,model); if(!normalized)throw coded('INVALID_AI_RESPONSE');
-    const cost=estimatedCost(provider.inputTokens,provider.outputTokens,Deno.env.get('GROQ_INPUT_USD_PER_MILLION'),Deno.env.get('GROQ_OUTPUT_USD_PER_MILLION'));
-    const safeResult={analysis:{...normalized,aiRequestId:input.value.requestId},model};
-    const {data:completed,error:completionError}=await ctx.supabaseAdmin.rpc('complete_ai_analysis',{p_user_id:userId,p_request_id:input.value.requestId,p_feature:FEATURE,p_result:safeResult,p_input_tokens:provider.inputTokens,p_image_tokens:null,p_output_tokens:provider.outputTokens,p_estimated_cost:cost,p_mistake:{subject:normalized.suggestedSubject,topic:normalized.topic,note:normalized.errorSummary,errorType:normalized.errorType,mistakeSummary:normalized.errorSummary,explanation:normalized.explanation,repairRule:normalized.repairRule,confidence:confidenceNumber(normalized.confidence)}});
-    if(completionError)throw coded('INTERNAL_ERROR'); const usage=completed as RpcResult;
-    return Response.json({...safeResult,usage:{usedThisMonth:usage.used,monthlyLimit:usage.limit,remaining:usage.remaining}});
-  }catch(error){const code=errorCode(error);await ctx.supabaseAdmin.rpc('fail_ai_analysis',{p_user_id:userId,p_request_id:input.value.requestId,p_feature:FEATURE,p_error_code:code});return errorResponse(code,code==='AI_PROVIDER_TIMEOUT'?504:502);}
+    const completed=await runAnalysisLifecycle({
+      runProvider:async()=>{
+        provider=await callGroq(input.value,apiKey,model);
+        const normalized=normalizeProviderAnalysis(provider.analysis,model); if(!normalized)throw coded('INVALID_AI_RESPONSE');
+        const cost=estimatedCost(provider.inputTokens,provider.outputTokens,Deno.env.get('GROQ_INPUT_USD_PER_MILLION'),Deno.env.get('GROQ_OUTPUT_USD_PER_MILLION'));
+        const safeResult={analysis:{...normalized,aiRequestId:input.value.requestId},model};
+        responseResult=safeResult;
+        const completionPayload={p_user_id:userId,p_request_id:input.value.requestId,p_feature:FEATURE,p_route:MISTAKE_INTERPRETATION_ROUTE,p_attempt:attempt,p_result:safeResult,p_input_tokens:provider.inputTokens,p_image_tokens:null,p_output_tokens:provider.outputTokens,p_estimated_cost:cost,p_latency_ms:Math.round(performance.now()-providerStartedAt),p_fallback_used:false,p_mistake:{subject:normalized.suggestedSubject,topic:normalized.topic,note:normalized.errorSummary,errorType:normalized.errorType,mistakeSummary:normalized.errorSummary,explanation:normalized.explanation,repairRule:normalized.repairRule,confidence:confidenceNumber(normalized.confidence)}};
+        return{safeResult,completionPayload};
+      },
+      complete:async prepared=>ctx.supabaseAdmin.rpc('complete_ai_analysis_observed',prepared.completionPayload),
+      onProviderFailure:async error=>{
+        const candidate=errorCode(error); const code=sanitizeAiErrorCode(candidate)===candidate?candidate:'INTERNAL_ERROR'; providerFailureCode=code;
+        const cost=provider?estimatedCost(provider.inputTokens,provider.outputTokens,Deno.env.get('GROQ_INPUT_USD_PER_MILLION'),Deno.env.get('GROQ_OUTPUT_USD_PER_MILLION')):null;
+        const {error:failureError}=await ctx.supabaseAdmin.rpc('fail_ai_analysis_observed',{p_user_id:userId,p_request_id:input.value.requestId,p_feature:FEATURE,p_route:MISTAKE_INTERPRETATION_ROUTE,p_attempt:attempt,p_input_tokens:provider?.inputTokens??null,p_output_tokens:provider?.outputTokens??null,p_estimated_cost:cost,p_latency_ms:Math.round(performance.now()-providerStartedAt),p_fallback_used:false,p_error_code:code});
+        if(failureError)await ctx.supabaseAdmin.rpc('fail_ai_analysis',{p_user_id:userId,p_request_id:input.value.requestId,p_feature:FEATURE,p_error_code:code});
+      },
+    });
+    const usage=completed as RpcResult;
+    return Response.json({...responseResult!,usage:{usedToday:usage.used,dailyLimit:usage.limit,remaining:usage.remaining}});
+  }catch(error){
+    if(error instanceof AnalysisFinalizationError)return errorResponse('PERSISTENCE_RETRYABLE',503);
+    const code=providerFailureCode??'AI_PROVIDER_ERROR';
+    return errorResponse(code,code==='AI_PROVIDER_TIMEOUT'?504:502);
+  }
 })};
 
 async function callGroq(input:ValidatedRequest,apiKey:string,model:string){

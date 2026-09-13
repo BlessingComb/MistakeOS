@@ -1,8 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { analyzeQuestionPhoto, isMistakeAnalysisConfigured, type AnalysisClientResult, type AnalysisUsage, type QuestionPhotoAnalysis } from '../analysis';
+import { analyzeQuestionPhoto, createQuestionPhotoAnalysisRequest, isMistakeAnalysisConfigured, type AnalysisClientResult, type AnalysisUsage, type QuestionPhotoAnalysis, type QuestionPhotoAnalysisRequest } from '../analysis';
 import { trackEvent } from '../analytics';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useTranslation } from '../i18n';
@@ -11,23 +11,28 @@ import { colors, createThemedStyles, radius, spacing, type } from '../theme';
 import { hasMistakeEvidence, type MistakeDraft } from './core';
 import { QuestionPhotoSource, selectQuestionPhoto } from './photo';
 import { QuestionPhotoImage } from './QuestionPhotoImage';
+import { photoLimitFor, type DailyPhotoUsage } from '../photoUsage';
+import { useEntitlements } from '../entitlements';
 
 type Props = {
   defaultSubjects?: readonly SubjectId[];
   onSave: (draft: MistakeDraft) => Promise<void>;
   onCancel: () => void;
   onOpenPro?: () => void;
+  photoUsage: DailyPhotoUsage;
+  onConsumePhotoSlot: () => Promise<boolean>;
 };
 
-export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOpenPro }: Props) {
+export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOpenPro, photoUsage, onConsumePhotoSlot }: Props) {
   const { t, language } = useTranslation();
+  const { level } = useEntitlements();
   const [subject, setSubject] = useState<SubjectId | null>(defaultSubjects[0] ?? null);
   const [customSubject, setCustomSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [cause, setCause] = useState<CauseId | undefined>();
   const [note, setNote] = useState('');
   const [photoUri, setPhotoUri] = useState<string | undefined>();
-  const [photoError, setPhotoError] = useState<'permission' | 'generic' | null>(null);
+  const [photoError, setPhotoError] = useState<'permission' | 'generic' | 'limit' | null>(null);
   const [selectingPhoto, setSelectingPhoto] = useState(false);
   const [photoAnalysis, setPhotoAnalysis] = useState<QuestionPhotoAnalysis | undefined>();
   const [analysisState, setAnalysisState] = useState<'idle' | 'loading' | 'unavailable' | 'error'>('idle');
@@ -36,6 +41,7 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
   const [error, setError] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const analysisRequestRef = useRef<QuestionPhotoAnalysisRequest | null>(null);
 
   const submit = async () => {
     if (saving) return;
@@ -59,11 +65,20 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
 
   const addPhoto = async (source: QuestionPhotoSource) => {
     if (selectingPhoto) return;
+    const replacingPhoto = Boolean(photoUri);
+    if (!replacingPhoto && photoUsage.used >= photoLimitFor(level)) {
+      setPhotoError('limit');
+      return;
+    }
     setSelectingPhoto(true);
     setPhotoError(null);
     const result = await selectQuestionPhoto(source);
     setSelectingPhoto(false);
     if (result.status === 'selected') {
+      if (!replacingPhoto && !(await onConsumePhotoSlot())) {
+        setPhotoError('limit');
+        return;
+      }
       setPhotoUri(result.uri);
       setError(false);
       setSaveError(false);
@@ -71,6 +86,7 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
       setAnalysisState('idle');
       setAnalysisError(null);
       setAnalysisUsage(undefined);
+      analysisRequestRef.current = null;
       Haptics.selectionAsync().catch(() => undefined);
     } else if (result.status === 'permission-denied') {
       setPhotoError('permission');
@@ -85,11 +101,14 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
     setAnalysisError(null);
     trackEvent('photo_analysis_started', { source: 'mistake_form' });
     trackEvent('ai_analysis_started', { feature: 'mistake_photo_analysis' });
-    const result = await analyzeQuestionPhoto(photoUri, language);
+    const request = analysisRequestRef.current ?? createQuestionPhotoAnalysisRequest();
+    analysisRequestRef.current = request;
+    const result = await analyzeQuestionPhoto(photoUri, language, request);
     if (result.status === 'success') {
       setPhotoAnalysis(result.analysis);
       setAnalysisUsage(result.usage);
       setAnalysisState('idle');
+      analysisRequestRef.current = null;
       if (result.analysis.status === 'identified') {
         if (!note.trim()) setNote(result.analysis.errorSummary);
         if (!cause && result.analysis.suggestedCause) setCause(result.analysis.suggestedCause);
@@ -124,7 +143,6 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
               <Feather name="x" size={19} color={colors.ink} />
               <Text style={styles.closeText}>{t('mistake.cancel')}</Text>
             </Pressable>
-            <Text style={styles.overline}>{t('mistake.overline')}</Text>
           </View>
 
           <Text style={styles.title}>{t('mistake.title')}</Text>
@@ -169,7 +187,7 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
                   <Feather name="refresh-cw" size={14} color={colors.onDark} />
                   <Text style={styles.photoActionDarkText}>{t('mistake.replacePhoto')}</Text>
                 </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => { setPhotoUri(undefined); setPhotoAnalysis(undefined); setAnalysisState('idle'); setAnalysisUsage(undefined); }} style={styles.photoRemove}>
+                <Pressable accessibilityRole="button" onPress={() => { setPhotoUri(undefined); setPhotoAnalysis(undefined); setAnalysisState('idle'); setAnalysisUsage(undefined); analysisRequestRef.current = null; }} style={styles.photoRemove}>
                   <Feather name="trash-2" size={15} color={colors.onDark} />
                 </Pressable>
               </View>
@@ -191,7 +209,7 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
               </View>
             </View>
           )}
-          {photoError && <Text accessibilityRole="alert" style={styles.photoError}>{t(photoError === 'permission' ? 'mistake.photoPermission' : 'mistake.photoError')}</Text>}
+          {photoError && <Text accessibilityRole="alert" style={styles.photoError}>{t(photoError === 'permission' ? 'mistake.photoPermission' : photoError === 'limit' ? 'mistake.photoDailyLimit' : 'mistake.photoError')}</Text>}
 
           {photoUri && (
             <View style={styles.analysisSection}>
@@ -202,7 +220,7 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
                     <View style={styles.analysisIntroCopy}><Text style={styles.analysisTitle}>{t('mistake.analyzeTitle')}</Text><Text style={styles.analysisBody}>{t('mistake.analyzeBody')}</Text></View>
                   </View>
                   <Text style={styles.privacyNote}>{t('mistake.analysisPrivacy')}</Text>
-                  {analysisUsage && <Text style={styles.privacyNote}>{t('mistake.analysisUsage', { used: analysisUsage.usedThisMonth, limit: analysisUsage.monthlyLimit })}</Text>}
+                  {analysisUsage && <Text style={styles.privacyNote}>{t('mistake.analysisUsage', { used: analysisUsage.usedToday, limit: analysisUsage.dailyLimit })}</Text>}
                   <Pressable accessibilityRole="button" disabled={analysisState === 'loading'} onPress={analyzePhoto} style={[styles.analyzeButton, analysisState === 'loading' && styles.photoSelecting]}>
                     <Text style={styles.analyzeButtonText}>{analysisState === 'loading' ? t('mistake.analyzing') : t('mistake.analyzePhoto')}</Text>
                     <Feather name="arrow-right" size={16} color={colors.onAccent} />
@@ -211,7 +229,7 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
                   {analysisState === 'error' && <><Text accessibilityRole="alert" style={styles.analysisError}>{t(analysisError === 'limit-reached' ? 'mistake.analysisLimitReached' : analysisError === 'rate-limit' ? 'mistake.analysisRateLimit' : analysisError === 'invalid-image' ? 'mistake.analysisInvalidImage' : analysisError === 'unauthorized' ? 'mistake.analysisSignIn' : 'mistake.analysisFailed')}</Text>{analysisError === 'limit-reached' && onOpenPro && <Pressable accessibilityRole="button" onPress={onOpenPro} style={styles.retryAnalysis}><Text style={styles.retryAnalysisText}>{t('mistake.viewPro')}</Text></Pressable>}</>}
                 </View>
               )}
-              {photoAnalysis && <AnalysisResult analysis={photoAnalysis} onRetry={() => { setPhotoAnalysis(undefined); setAnalysisState('idle'); setAnalysisUsage(undefined); }} />}
+              {photoAnalysis && <AnalysisResult analysis={photoAnalysis} onRetry={() => { setPhotoAnalysis(undefined); setAnalysisState('idle'); setAnalysisUsage(undefined); analysisRequestRef.current = null; }} />}
             </View>
           )}
 
@@ -249,7 +267,7 @@ export function MistakeFormScreen({ defaultSubjects = [], onSave, onCancel, onOp
           {error && <Text accessibilityRole="alert" style={styles.error}>{t('mistake.required')}</Text>}
           {saveError && <Text accessibilityRole="alert" style={styles.error}>{t('mistake.saveFailed')}</Text>}
           <View style={[styles.submit, saving && styles.saving]}>
-            <PrimaryButton label={t('mistake.save')} meta={t('mistake.saveMeta')} tone="risk" onPress={submit} />
+            <PrimaryButton disabled={saving} label={t('mistake.save')} meta={t('mistake.saveMeta')} tone="risk" onPress={submit} />
           </View>
         </View>
       </ScrollView>

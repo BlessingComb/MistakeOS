@@ -24,6 +24,14 @@ export async function resolveQuestionPhotoUri(uri: string): Promise<string> {
   } catch { return uri; }
 }
 
+export async function clearQuestionPhotos(): Promise<void> {
+  if (typeof indexedDB === 'undefined') return;
+  await new Promise<void>((resolve) => {
+    const request = indexedDB.deleteDatabase(DATABASE_NAME);
+    request.onsuccess = request.onerror = request.onblocked = () => resolve();
+  });
+}
+
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, 1);

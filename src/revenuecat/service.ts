@@ -61,6 +61,17 @@ export class RevenueCatService {
     }
   }
 
+  async syncIdentity(appUserId: string | null): Promise<void> {
+    if (!this.config || this.client.availability !== 'native') return;
+    try {
+      if (appUserId) await this.client.logIn?.(appUserId);
+      else await this.client.logOut?.();
+      this.applyCustomerInfo(await this.client.getCustomerInfo());
+    } catch {
+      // Identity sync must never take down the app; CustomerInfo remains the source of truth.
+    }
+  }
+
   async refreshOfferings(): Promise<void> {
     if (!this.config || this.client.availability !== 'native') {
       this.update({ offeringStatus: 'unavailable' });

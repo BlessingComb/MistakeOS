@@ -8,9 +8,17 @@ export class MistakeRepository {
   async load(): Promise<MistakeRecord[]> {
     const cached = await this.local.load();
     const userId = await this.userId(); if (!userId || !this.cloud) return cached;
+    // Locally-created records are the durable retry queue. Re-attempt their
+    // idempotent upserts whenever the app becomes active or reloads data.
+    await this.syncCached(cached, userId);
     const { data, error } = await this.cloud.from('mistakes').select('*').order('created_at', { ascending: false });
     if (error || !data) { trackEvent('sync_failed', { entity: 'mistake', operation: 'read' }); return cached; }
     const merged = merge(cached, data.map(fromRow)); await this.local.replaceAll(merged); return merged;
+  }
+  private async syncCached(records: readonly MistakeRecord[], userId: string) {
+    if (!this.cloud || records.length === 0) return;
+    const results = await Promise.all(records.map((record) => this.cloud!.from('mistakes').upsert(toRow(record, userId), { onConflict: record.photoAnalysis?.aiRequestId ? 'user_id,ai_request_id' : 'user_id,client_id' })));
+    if (results.some(({ error }) => error)) trackEvent('sync_failed', { entity: 'mistake', operation: 'write' });
   }
   async add(record: MistakeRecord): Promise<MistakeRecord[]> {
     const next = await this.local.add(record); const userId = await this.userId(); if (!userId || !this.cloud) return next;

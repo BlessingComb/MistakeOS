@@ -3,23 +3,29 @@ import { mistakeAnalysisUrl } from './config';
 import { questionPhotoPayload } from './photoPayload';
 import { requestQuestionPhotoAnalysis, parseAnalysisResponse, type AnalysisClientResult } from './service';
 import { supabase } from '../supabase';
+import { questionPhotoAnalysisBody, type QuestionPhotoAnalysisRequest } from './request';
 
-export async function analyzeQuestionPhoto(photoUri: string, language: AppLanguage, fetcher: typeof fetch = fetch): Promise<AnalysisClientResult> {
+export async function analyzeQuestionPhoto(
+  photoUri: string,
+  language: AppLanguage,
+  request: QuestionPhotoAnalysisRequest,
+  fetcher: typeof fetch = fetch,
+): Promise<AnalysisClientResult> {
   try {
     const photo = await questionPhotoPayload(photoUri);
-    if (supabase) return requestEdgeAnalysis(photo, language);
+    if (supabase) return requestEdgeAnalysis(photo, language, request);
     if (!mistakeAnalysisUrl) return { status: 'unavailable' };
-    return requestQuestionPhotoAnalysis(mistakeAnalysisUrl, photo, language, fetcher);
+    return requestQuestionPhotoAnalysis(mistakeAnalysisUrl, photo, language, request.requestId, fetcher);
   } catch {
     return { status: 'error', reason: 'network' };
   }
 }
 
-async function requestEdgeAnalysis(photo: { base64: string; mimeType: string }, language: AppLanguage): Promise<AnalysisClientResult> {
+async function requestEdgeAnalysis(photo: { base64: string; mimeType: string }, language: AppLanguage, request: QuestionPhotoAnalysisRequest): Promise<AnalysisClientResult> {
   if (!supabase) return { status: 'unavailable' };
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) return { status: 'error', reason: 'unauthorized' };
-  const { data, error } = await supabase.functions.invoke('analyze-mistake', { body: { requestId: requestId(), image: photo, locale: language } });
+  const { data, error } = await supabase.functions.invoke('analyze-mistake', { body: questionPhotoAnalysisBody(request, photo, language) });
   if (error) {
     const payload = await responsePayload(error);
     const code = typeof payload?.code === 'string' ? payload.code : '';
@@ -40,5 +46,4 @@ async function responsePayload(error: unknown): Promise<Record<string, unknown> 
   if (!(context instanceof Response)) return null;
   return context.clone().json().catch(() => null) as Promise<Record<string, unknown> | null>;
 }
-function numericUsage(value: Record<string, unknown>) { const usedThisMonth=Number(value.used),monthlyLimit=Number(value.limit),remaining=Number(value.remaining??0); return [usedThisMonth,monthlyLimit,remaining].every(Number.isFinite)?{usedThisMonth,monthlyLimit,remaining}:undefined; }
-function requestId() { const bytes=new Uint8Array(16); globalThis.crypto?.getRandomValues?.(bytes); bytes[6]=(bytes[6]&15)|64; bytes[8]=(bytes[8]&63)|128; const hex=[...bytes].map(value=>value.toString(16).padStart(2,'0')).join(''); return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`; }
+function numericUsage(value: Record<string, unknown>) { const usedToday=Number(value.used),dailyLimit=Number(value.limit),remaining=Number(value.remaining??0); return [usedToday,dailyLimit,remaining].every(Number.isFinite)?{usedToday,dailyLimit,remaining}:undefined; }

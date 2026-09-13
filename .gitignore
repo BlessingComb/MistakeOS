@@ -7,6 +7,7 @@ node_modules/
 .expo/
 dist/
 web-build/
+.launch-web-check/
 expo-env.d.ts
 
 # Native
@@ -42,3 +43,15 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+.vercel
+
+# local tooling and research artifacts
+.agents/
+skills-lock.json
+.obsidian/
+docs/obsidian/.obsidian/
+scripts/__pycache__/
+supabase/.temp/
+supabase/.branches/
+tmp/

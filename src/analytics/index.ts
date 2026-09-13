@@ -1,4 +1,6 @@
 export type AnalyticsEventMap = {
+  app_unexpected_error: { source: 'app_boundary' };
+  local_storage_unavailable: { source: 'app_boot' | 'resume' };
   onboarding_started: { source: 'first_launch' | 'settings_reset' };
   onboarding_completed: { subjectCount: number; causeCount: number; goal: string };
   onboarding_skipped: { stage: string };
@@ -39,6 +41,30 @@ export type AnalyticsEventMap = {
   entitlement_pro_activated: { source: 'customer_info' };
   entitlement_pro_lost: { source: 'customer_info' };
   customer_center_opened: { source: 'settings' };
+  account_screen_viewed: { source: 'settings' };
+  account_signup_started: { source: 'account_screen' };
+  account_signup_succeeded: { source: 'account_screen'; confirmationRequired: boolean };
+  account_signup_failed: { source: 'account_screen' };
+  account_signin_started: { source: 'account_screen' };
+  account_signin_succeeded: { source: 'account_screen' };
+  account_signin_failed: { source: 'account_screen' };
+  account_signed_out: { source: 'account_screen' };
+  account_delete_completed: { source: 'account_screen' };
+  account_password_reset_requested: { source: 'account_screen' };
+  account_password_reset_completed: { source: 'recovery_link' };
+  circles_viewed: Record<string, never>;
+  circle_create_started: Record<string, never>;
+  circle_created: { subject: string };
+  circle_invite_shared: { source: 'native_share' };
+  circle_join_started: Record<string, never>;
+  circle_joined: { source: 'invite_code' };
+  mistake_shared: { source: 'circle_preview' };
+  group_ranking_viewed: { period: 'week' | 'month' | 'total' };
+  group_ranking_period_changed: { period: 'week' | 'month' | 'total' };
+  group_rank_position_changed: { delta: number };
+  group_rank_top3_reached: Record<string, never>;
+  group_rank_first_place_reached: Record<string, never>;
+  group_milestone_unlocked: { milestone: number };
 };
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;

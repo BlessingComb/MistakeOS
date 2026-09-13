@@ -13,3 +13,8 @@ export async function persistQuestionPhoto(uri: string, _base64: string | null, 
 export async function resolveQuestionPhotoUri(uri: string): Promise<string> {
   return uri;
 }
+
+export async function clearQuestionPhotos(): Promise<void> {
+  const directory = new Directory(Paths.document, 'mistakeos-question-photos');
+  if (directory.exists) directory.delete();
+}

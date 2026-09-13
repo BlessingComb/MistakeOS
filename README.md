@@ -10,14 +10,48 @@ Premium mobile-first prototype for turning recurring study mistakes into visible
 - **Mastery moment** — motion and haptic feedback make a mastered topic feel earned.
 - **Exam Prep Map** — a prioritized plan of the real mistake patterns to address before an upcoming exam.
 
-## Run
+## Comece aqui — comandos do terminal
 
-```bash
-npm install
-npm start
+Abra o terminal na pasta do projeto antes de rodar qualquer comando:
+
+```powershell
+cd C:\Users\dello\MistakeOS
 ```
 
-Use `npm run web` for a browser preview. Native purchases require the project development build; Expo Go does not include RevenueCat's native modules.
+| Quero… | Comando |
+| --- | --- |
+| Instalar dependências (apenas na primeira vez ou após atualizar o projeto) | `npm install` |
+| Abrir o app na development build já instalada no celular/emulador | `npx expo start --dev-client --clear` |
+| Abrir a versão web no navegador | `npm run web` |
+| Iniciar o servidor local de análise de fotos | `npm run server:analysis` |
+| Verificar erros de TypeScript | `npm run typecheck` |
+| Verificar estilo/código | `npm run lint` |
+| Rodar os testes | `npm test` |
+| Gerar a versão web | `npm run build:web` |
+
+### Fluxo normal no celular
+
+1. Abra **um terminal** e rode:
+
+   ```powershell
+   npx expo start --dev-client --clear
+   ```
+
+2. Abra a development build do MistakeOS no celular ou inicie o emulador Android e pressione `a` nesse terminal.
+
+3. Só abra um **segundo terminal** quando for testar a análise local de fotos:
+
+   ```powershell
+   npm run server:analysis
+   ```
+
+`npx expo run:android` só é necessário para criar/recriar a development build nativa. Ele exige Android Studio, SDK Android e `adb` configurados. Para o uso diário após a build já estar instalada, use `npx expo start --dev-client --clear`.
+
+> Nunca coloque chaves secretas no README. Valores locais ficam somente no arquivo `.env`, que não deve ser versionado.
+
+## Obsidian
+
+A pasta [`docs/obsidian`](docs/obsidian) é um mini-vault Markdown. No Obsidian, use **Open folder as vault** e selecione essa pasta para ter um painel de comandos e notas do projeto.
 
 ## Secure photo error analysis
 
@@ -57,9 +91,31 @@ EXPO_PUBLIC_SUPABASE_URL
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 ```
 
-The migration creates private user-owned mistakes, exams, recovery evidence, immutable AI events, server-only Free/Pro limit configuration, and a RevenueCat entitlement-sync boundary. Free is enforced at 5 analyses/month. Pro is 100/month only after a trusted RevenueCat backend writes the `pro` entitlement; the app cannot grant itself Pro.
+### Password recovery redirect
+
+MistakeOS opens email links back in the installed app. In **Supabase Dashboard → Authentication → URL Configuration**, add both exact redirect URLs before testing email confirmation or password recovery:
+
+```text
+mistakeos://auth/callback
+mistakeos://reset-password
+```
+
+Keep the production app scheme stable after release.
+
+The migrations create private user-owned mistakes, exams, server-verified recovery evidence, immutable AI events, server-only Free/Pro limit configuration, and a RevenueCat entitlement-sync boundary. Free is enforced at 5 analyses/day. Pro is 50/day only after a trusted RevenueCat backend writes the `pro` entitlement; the app cannot grant itself Pro.
 
 RevenueCat server sync is intentionally not faked. Before Pro receives the server allowance, configure RevenueCat to use the Supabase user UUID as its App User ID and add a verified webhook/backend worker that updates `subscription_entitlements`. Until that trusted sync exists, the Edge Function securely applies the Free limit even when the native client recognizes Pro.
+
+### Production security checklist
+
+Before release, configure these controls in **Supabase Dashboard → Authentication**:
+
+1. Keep email confirmation enabled and allow only the two documented `mistakeos://` redirect URLs.
+2. Configure Auth rate limits and CAPTCHA/anti-bot protection for sign-up, sign-in and password reset. The app also applies a small user-interface cooldown, but it is not a replacement for server-side rate limits.
+3. Disable Anonymous Auth unless a future feature explicitly requires it.
+4. Configure production SMTP before inviting real users.
+
+On Android and iOS, Supabase session tokens are stored through `expo-secure-store` (Android Keystore/iOS Keychain). Learning records and question photos remain device-local, so users should protect their device and remove personal information from photos before analysis.
 
 Original photos remain only in the device cache in Phase 1. The Edge Function receives the selected image inline, persists the normalized result, and does not upload the original to Supabase Storage.
 
@@ -94,12 +150,34 @@ npx eas-cli build --platform ios --profile development-simulator
 
 After installing the build, start Metro with `npx expo start --dev-client`.
 
+For an internal test package or a store-ready build, use the committed EAS profiles:
+
+```bash
+npx eas-cli build --platform android --profile preview
+npx eas-cli build --platform android --profile production
+```
+
 ## Quality checks
 
 ```bash
 npm run typecheck
 npm run build:web
 ```
+
+## Launch safety and account deletion
+
+Before a public release, read [`docs/LAUNCH_READINESS.md`](docs/LAUNCH_READINESS.md). It records implemented safeguards, manual device QA, user-facing gaps, and dashboard tasks that cannot be completed by code alone.
+
+The account-deletion feature needs the database migrations and Edge Function deployed before it is shown as production-ready:
+
+```bash
+npx supabase db push --dry-run --linked --skip-vault
+npx supabase db push
+npx supabase functions deploy delete-account
+npx supabase db advisors --linked --type security --level info
+```
+
+The app never stores a Supabase service-role key. The server-side function determines the account from the caller's verified session. Review the published privacy/terms drafts and configure a monitored support email before release.
 
 ## Design system
 
