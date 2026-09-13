@@ -1,14 +1,15 @@
 import Feather from '@expo/vector-icons/Feather';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { classroomDemoEnabled } from '../features';
-import { createClassroom, createClassroomAssignment, getClassroomSkillSummary, getMyClassroomProgress, getMyClassroomRole, isMissingClassroomSchema, joinClassroom, listClassroomAssignments, listClassroomRoster, listMyClassrooms, sortClassroomAttention, type Classroom, type ClassroomAssignment, type ClassroomProgress, type ClassroomRole, type ClassroomRosterEntry, type ClassroomSkillSummary } from '../classrooms';
+import { classifyClassroomLoadFailure, createClassroom, createClassroomAssignment, getClassroomSkillSummary, getMyClassroomProgress, getMyClassroomRole, isMissingClassroomSchema, joinClassroom, listClassroomAssignments, listClassroomRoster, listMyClassrooms, sortClassroomAttention, type Classroom, type ClassroomAssignment, type ClassroomProgress, type ClassroomRole, type ClassroomRosterEntry, type ClassroomSkillSummary } from '../classrooms';
 import type { PublishedExamCatalog } from '../examPrep';
 import { useTranslation } from '../i18n';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, createThemedStyles, radius, spacing, type } from '../theme';
 
 type Mode = 'list' | 'create' | 'join' | 'detail' | 'assignment';
+type LoadState = 'loading' | 'ready' | 'backend_unavailable' | 'network' | 'unexpected';
 
 export function ClassroomsScreen({ catalogs }: { catalogs: readonly PublishedExamCatalog[] }) {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export function ClassroomsScreen({ catalogs }: { catalogs: readonly PublishedExa
   const [progress, setProgress] = useState<ClassroomProgress | null>(null);
   const [roster, setRoster] = useState<ClassroomRosterEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unavailable, setUnavailable] = useState(false);
+  const [loadState, setLoadState] = useState<LoadState>('loading');
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [objective, setObjective] = useState('');
@@ -29,24 +30,43 @@ export function ClassroomsScreen({ catalogs }: { catalogs: readonly PublishedExa
   const [code, setCode] = useState('');
   const [assignmentSkill, setAssignmentSkill] = useState<ClassroomSkillSummary | null>(null);
   const [assignmentTitle, setAssignmentTitle] = useState('');
+  const mountedRef = useRef(true);
   const teacherOverview = useMemo(() => summarizeTeacherOverview(summary), [summary]);
 
   const selectedCatalogVersionId = catalogVersionId ?? catalogs[0]?.id ?? null;
 
+  const loadClassrooms = () => {
+    setLoading(true); setLoadState('loading'); setError(null);
+    void Promise.all([listMyClassrooms(), getMyClassroomRole()])
+      .then(([nextClassrooms, nextRole]) => {
+        if (!mountedRef.current) return;
+        setClassrooms(nextClassrooms); setRole(nextRole); setLoadState('ready');
+      })
+      .catch((cause: unknown) => {
+        if (!mountedRef.current) return;
+        const classification = classifyClassroomLoadFailure(cause);
+        if (typeof __DEV__ !== 'undefined' && __DEV__) console.warn('[CLASSROOMS_LOAD]', classification);
+        setLoadState(classification);
+      })
+      .finally(() => { if (mountedRef.current) setLoading(false); });
+  };
+
   useEffect(() => {
+    mountedRef.current = true;
     let active = true;
     void Promise.all([listMyClassrooms(), getMyClassroomRole()])
       .then(([nextClassrooms, nextRole]) => {
         if (!active) return;
-        setClassrooms(nextClassrooms); setRole(nextRole); setUnavailable(false);
+        setClassrooms(nextClassrooms); setRole(nextRole); setLoadState('ready');
       })
       .catch((cause: unknown) => {
         if (!active) return;
-        if (isMissingClassroomSchema(cause)) setUnavailable(true);
-        else setError(t('common.unexpectedError'));
+        const classification = classifyClassroomLoadFailure(cause);
+        if (typeof __DEV__ !== 'undefined' && __DEV__) console.warn('[CLASSROOMS_LOAD]', classification);
+        setLoadState(classification);
       })
       .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; mountedRef.current = false; };
   }, [t]);
 
   const openClassroom = async (classroom: Classroom) => {
@@ -60,7 +80,7 @@ export function ClassroomsScreen({ catalogs }: { catalogs: readonly PublishedExa
       ]);
       setAssignments(nextAssignments); setSummary(sortClassroomAttention(nextSummary)); setProgress(nextProgress); setRoster(nextRoster);
     } catch (cause) {
-      if (isMissingClassroomSchema(cause)) setUnavailable(true);
+      if (isMissingClassroomSchema(cause)) setLoadState('backend_unavailable');
       else setError(t('common.unexpectedError'));
     } finally { setLoading(false); }
   };
@@ -89,8 +109,9 @@ export function ClassroomsScreen({ catalogs }: { catalogs: readonly PublishedExa
     } catch { setError(t('classrooms.assignmentError')); } finally { setLoading(false); }
   };
 
-  if (loading && mode === 'list') return <View style={styles.loading}><ActivityIndicator color={colors.signal} /></View>;
-  if (unavailable && !classroomDemoEnabled) return <ScreenShell t={t}><Text style={styles.title}>{t('classrooms.unavailableTitle')}</Text><Text style={styles.body}>{t('classrooms.unavailableBody')}</Text></ScreenShell>;
+  if (loading && mode === 'list') return <ScreenShell t={t}><View accessibilityRole="progressbar" style={styles.loading}><ActivityIndicator color={colors.signal} /><Text style={styles.loadingText}>{t('classrooms.loading')}</Text></View></ScreenShell>;
+  if (loadState === 'backend_unavailable' && !classroomDemoEnabled) return <ScreenShell t={t}><Text style={styles.title}>{t('classrooms.unavailableTitle')}</Text><Text style={styles.body}>{t('classrooms.unavailableBody')}</Text></ScreenShell>;
+  if ((loadState === 'network' || loadState === 'unexpected') && mode === 'list') return <ScreenShell t={t}><View style={styles.empty}><Feather name={loadState === 'network' ? 'wifi-off' : 'alert-circle'} size={29} color={loadState === 'network' ? colors.signal : colors.risk} /><Text accessibilityRole="alert" style={styles.emptyTitle}>{t(loadState === 'network' ? 'classrooms.networkTitle' : 'classrooms.loadErrorTitle')}</Text><Text style={styles.body}>{t(loadState === 'network' ? 'classrooms.networkBody' : 'classrooms.loadErrorBody')}</Text><Pressable accessibilityRole="button" onPress={() => { loadClassrooms(); }} style={styles.retry}><Text style={styles.retryText}>{t('common.tryAgain')}</Text></Pressable></View></ScreenShell>;
 
   return <ScreenShell t={t} back={mode !== 'list'} onBack={() => { setMode('list'); setSelected(null); setError(null); }}>
     {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
@@ -138,5 +159,5 @@ function summarizeTeacherOverview(summary: readonly ClassroomSkillSummary[]) {
 }
 
 const styles = createThemedStyles((colors) => StyleSheet.create({
-  scroll: { paddingBottom: 112 }, loading: { flex: 1, alignItems: 'center', justifyContent: 'center' }, screen: { width: '100%', maxWidth: 680, alignSelf: 'center', padding: spacing.lg, gap: spacing.md }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, overline: { color: colors.signal, fontFamily: type.monoBold, fontSize: 9, letterSpacing: 1 }, back: { flexDirection: 'row', gap: 6, alignItems: 'center' }, backText: { color: colors.ink, fontFamily: type.bold, fontSize: 13 }, title: { color: colors.ink, fontFamily: type.extraBold, fontSize: 36, lineHeight: 40, letterSpacing: -1.4 }, body: { color: colors.muted, fontFamily: type.regular, fontSize: 15, lineHeight: 22 }, error: { color: colors.risk, fontFamily: type.regular, fontSize: 13 }, demo: { color: colors.signal, fontFamily: type.monoBold, fontSize: 9, letterSpacing: 1, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.violetWash }, empty: { minHeight: 220, padding: spacing.xl, backgroundColor: colors.paper, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', gap: spacing.md }, emptyTitle: { color: colors.ink, fontFamily: type.bold, fontSize: 20 }, classroomCard: { minHeight: 74, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }, classroomName: { color: colors.ink, fontFamily: type.bold, fontSize: 16 }, cardMeta: { color: colors.muted, fontFamily: type.regular, fontSize: 12, marginTop: 3 }, actions: { gap: spacing.sm }, secondary: { minHeight: 48, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md }, secondaryText: { color: colors.signal, fontFamily: type.bold, fontSize: 13 }, field: { gap: 7 }, label: { color: colors.ink, fontFamily: type.bold, fontSize: 13 }, input: { minHeight: 52, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, color: colors.ink, fontFamily: type.regular, fontSize: 15 }, multiline: { minHeight: 88, paddingTop: spacing.sm, textAlignVertical: 'top' }, catalog: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper }, catalogSelected: { borderColor: colors.signal, backgroundColor: colors.violetWash }, catalogName: { color: colors.ink, fontFamily: type.bold, fontSize: 14 }, info: { gap: 4, padding: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper }, infoLabel: { color: colors.muted, fontFamily: type.monoBold, fontSize: 8, letterSpacing: .8, marginTop: spacing.xs }, infoValue: { color: colors.ink, fontFamily: type.semibold, fontSize: 14 }, code: { color: colors.signal, fontFamily: type.extraBold, fontSize: 23, letterSpacing: 2 }, section: { color: colors.ink, fontFamily: type.bold, fontSize: 20, marginTop: spacing.sm }, overviewGrid: { flexDirection: 'row', gap: spacing.sm }, overviewMetric: { flex: 1, minHeight: 78, padding: spacing.sm, borderRadius: radius.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line }, overviewValue: { fontFamily: type.extraBold, fontSize: 21 }, overviewLabel: { color: colors.muted, fontFamily: type.regular, fontSize: 9, marginTop: 3 }, assignment: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper }, assignmentTitle: { color: colors.ink, fontFamily: type.bold, fontSize: 14 }, rosterName: { color: colors.ink, fontFamily: type.regular, fontSize: 14 }, privacyNote: { color: colors.faint, fontFamily: type.regular, fontSize: 10, lineHeight: 15 }, subjectSummary: { paddingVertical: spacing.sm, borderTopWidth: 1, borderColor: colors.line }, skill: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }, risk: { color: colors.risk, fontFamily: type.bold, fontSize: 12 }, grow: { flex: 1 },
+  scroll: { paddingBottom: 112 }, loading: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: spacing.md }, loadingText: { color: colors.muted, fontFamily: type.regular, fontSize: 13 }, screen: { width: '100%', maxWidth: 680, alignSelf: 'center', padding: spacing.lg, gap: spacing.md }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, overline: { color: colors.signal, fontFamily: type.monoBold, fontSize: 9, letterSpacing: 1 }, back: { flexDirection: 'row', gap: 6, alignItems: 'center' }, backText: { color: colors.ink, fontFamily: type.bold, fontSize: 13 }, title: { color: colors.ink, fontFamily: type.extraBold, fontSize: 36, lineHeight: 40, letterSpacing: -1.4 }, body: { color: colors.muted, fontFamily: type.regular, fontSize: 15, lineHeight: 22 }, error: { color: colors.risk, fontFamily: type.regular, fontSize: 13 }, demo: { color: colors.signal, fontFamily: type.monoBold, fontSize: 9, letterSpacing: 1, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.violetWash }, empty: { minHeight: 220, padding: spacing.xl, backgroundColor: colors.paper, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', gap: spacing.md }, emptyTitle: { color: colors.ink, fontFamily: type.bold, fontSize: 20 }, retry: { minHeight: 46, paddingHorizontal: spacing.md, borderRadius: radius.md, backgroundColor: colors.signal, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center' }, retryText: { color: colors.onAccent, fontFamily: type.bold, fontSize: 13 }, classroomCard: { minHeight: 74, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }, classroomName: { color: colors.ink, fontFamily: type.bold, fontSize: 16 }, cardMeta: { color: colors.muted, fontFamily: type.regular, fontSize: 12, marginTop: 3 }, actions: { gap: spacing.sm }, secondary: { minHeight: 48, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md }, secondaryText: { color: colors.signal, fontFamily: type.bold, fontSize: 13 }, field: { gap: 7 }, label: { color: colors.ink, fontFamily: type.bold, fontSize: 13 }, input: { minHeight: 52, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, color: colors.ink, fontFamily: type.regular, fontSize: 15 }, multiline: { minHeight: 88, paddingTop: spacing.sm, textAlignVertical: 'top' }, catalog: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper }, catalogSelected: { borderColor: colors.signal, backgroundColor: colors.violetWash }, catalogName: { color: colors.ink, fontFamily: type.bold, fontSize: 14 }, info: { gap: 4, padding: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper }, infoLabel: { color: colors.muted, fontFamily: type.monoBold, fontSize: 8, letterSpacing: .8, marginTop: spacing.xs }, infoValue: { color: colors.ink, fontFamily: type.semibold, fontSize: 14 }, code: { color: colors.signal, fontFamily: type.extraBold, fontSize: 23, letterSpacing: 2 }, section: { color: colors.ink, fontFamily: type.bold, fontSize: 20, marginTop: spacing.sm }, overviewGrid: { flexDirection: 'row', gap: spacing.sm }, overviewMetric: { flex: 1, minHeight: 78, padding: spacing.sm, borderRadius: radius.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line }, overviewValue: { fontFamily: type.extraBold, fontSize: 21 }, overviewLabel: { color: colors.muted, fontFamily: type.regular, fontSize: 9, marginTop: 3 }, assignment: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper }, assignmentTitle: { color: colors.ink, fontFamily: type.bold, fontSize: 14 }, rosterName: { color: colors.ink, fontFamily: type.regular, fontSize: 14 }, privacyNote: { color: colors.faint, fontFamily: type.regular, fontSize: 10, lineHeight: 15 }, subjectSummary: { paddingVertical: spacing.sm, borderTopWidth: 1, borderColor: colors.line }, skill: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }, risk: { color: colors.risk, fontFamily: type.bold, fontSize: 12 }, grow: { flex: 1 },
 }));

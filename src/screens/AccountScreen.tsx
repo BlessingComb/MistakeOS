@@ -9,7 +9,7 @@ import { BrandMark } from '../components/BrandMark';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { colors, createThemedStyles, radius, spacing, type } from '../theme';
 
-type Props = { onBack?: () => void; lockedToSignUp?: boolean; onAccountDeleted?: () => Promise<void> };
+type Props = { onBack?: () => void; lockedToSignUp?: boolean; initialMode?: AuthMode; onAccountDeleted?: () => Promise<void> };
 
 const validationKeys: Record<Exclude<AuthValidationError, null>, TranslationKey> = {
   name: 'account.invalidName',
@@ -21,11 +21,11 @@ const validationKeys: Record<Exclude<AuthValidationError, null>, TranslationKey>
 const AnimatedSubmit = Animated.createAnimatedComponent(Pressable);
 type AuthFieldId = 'name' | 'email' | 'password' | 'confirmation';
 
-export function AccountScreen({ onBack, lockedToSignUp = false, onAccountDeleted }: Props) {
+export function AccountScreen({ onBack, lockedToSignUp = false, initialMode = 'signIn', onAccountDeleted }: Props) {
   const { height: windowHeight } = useWindowDimensions();
   const { t } = useTranslation();
   const { account, status, submit, signOut, deleteAccount, passwordRecovery, requestPasswordReset, completePasswordReset } = useAuth();
-  const [mode, setMode] = useState<AuthMode>('signUp');
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -114,7 +114,7 @@ export function AccountScreen({ onBack, lockedToSignUp = false, onAccountDeleted
       setNotice(validationKeys[response.field]);
       return;
     }
-    setNotice(response.result === 'unavailable' ? 'account.unavailableBody' : mode === 'signUp' ? 'account.signupError' : 'account.signinError');
+    setNotice(response.result === 'unavailable' ? 'account.unavailableBody' : response.result === 'email_in_use' ? 'account.emailInUse' : mode === 'signUp' ? 'account.signupError' : 'account.signinError');
   };
 
   const handleSignOut = async () => {

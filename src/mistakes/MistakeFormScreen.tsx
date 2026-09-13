@@ -312,7 +312,9 @@ function safeSuccessHaptic() {
 const styles = createThemedStyles((colors) => StyleSheet.create({
   keyboard: { flex: 1, backgroundColor: colors.canvas },
   scroll: { flex: 1 },
-  content: { paddingBottom: spacing.xxl },
+  // The form now lives in the normal application shell, so its last action
+  // must remain reachable above the persistent tab bar.
+  content: { paddingBottom: 112 },
   screen: { width: '100%', maxWidth: 680, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md },
   topLine: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: colors.line, paddingBottom: spacing.sm },
   closeButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },

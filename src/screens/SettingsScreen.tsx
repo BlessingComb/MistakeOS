@@ -19,9 +19,9 @@ const noticeKeys: Record<RevenueCatNotice, TranslationKey> = {
   manage_error: 'pro.manageError',
 };
 
-type Props = { onResetOnboarding: () => Promise<void>; onOpenPro: () => void; onOpenAccount: () => void; onOpenLegal: (document: 'privacy' | 'terms' | 'support') => void; onExportData: () => Promise<boolean> };
+type Props = { onResetOnboarding: () => Promise<void>; onOpenPro: () => void; onOpenAccount: () => void; onOpenPrepMap: () => void; onOpenExams: () => void; onOpenLegal: (document: 'privacy' | 'terms' | 'support') => void; onExportData: () => Promise<boolean> };
 
-export function SettingsScreen({ onResetOnboarding, onOpenPro, onOpenAccount, onOpenLegal, onExportData }: Props) {
+export function SettingsScreen({ onResetOnboarding, onOpenPro, onOpenAccount, onOpenPrepMap, onOpenExams, onOpenLegal, onExportData }: Props) {
   const { t, language, setLanguage } = useTranslation();
   const { mode, setMode } = useTheme();
   const revenueCat = useRevenueCat();
@@ -153,6 +153,15 @@ export function SettingsScreen({ onResetOnboarding, onOpenPro, onOpenAccount, on
             <Feather name="download" size={16} color={colors.ink} />
             <Text style={styles.outlineButtonText}>{t(exporting ? 'settings.exporting' : 'settings.exportData')}</Text>
           </Pressable>
+        </View>
+
+        <View style={styles.utilitySection}>
+          <View style={styles.utilityCopy}>
+            <Text style={styles.utilityTitle}>{t('settings.studies')}</Text>
+            <Text style={styles.utilityBody}>{t('settings.studiesBody')}</Text>
+          </View>
+          <Pressable accessibilityRole="button" onPress={onOpenPrepMap} style={styles.outlineButton}><Feather name="map" size={16} color={colors.ink} /><Text style={styles.outlineButtonText}>{t('settings.openPreparation')}</Text><Feather name="chevron-right" size={16} color={colors.ink} /></Pressable>
+          <Pressable accessibilityRole="button" onPress={onOpenExams} style={styles.outlineButton}><Feather name="calendar" size={16} color={colors.ink} /><Text style={styles.outlineButtonText}>{t('settings.examDates')}</Text><Feather name="chevron-right" size={16} color={colors.ink} /></Pressable>
         </View>
 
         <View style={styles.utilitySection}>

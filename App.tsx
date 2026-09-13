@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Reanimated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { BrandMark } from './src/components/BrandMark';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
-import { AuthProvider, useAuth } from './src/auth';
+import { AuthProvider, useAuth, type AuthMode } from './src/auth';
 import { trackEvent } from './src/analytics';
 import { TabBar, TabId } from './src/components/TabBar';
 import { I18nProvider, useTranslation } from './src/i18n';
@@ -33,12 +33,14 @@ import { ProScreen } from './src/screens/ProScreen';
 import { ReviewScreen } from './src/screens/ReviewScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AccountScreen } from './src/screens/AccountScreen';
+import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { ClassroomsScreen } from './src/screens/ClassroomsScreen';
 import { LegalScreen } from './src/screens/LegalScreen';
 import { AppDataProvider, useAppData } from './src/state';
 import { RevenueCatProvider } from './src/revenuecat';
 import { animationDriver, colors, createThemedStyles, motion, radius, spacing, type } from './src/theme';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import { resolveAuthGate, shouldShowTabBar } from './src/appFlow';
 
 const INTRO_KEY = '@mistakeos/intro:v1';
 
@@ -86,6 +88,7 @@ function MistakeApp() {
   const [onboardingSource, setOnboardingSource] = useState<'first_launch' | 'settings_reset'>('first_launch');
   const [introReady, setIntroReady] = useState(false);
   const [introFirst, setIntroFirst] = useState(true);
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   useEffect(() => { let mounted = true; AsyncStorage.getItem(INTRO_KEY).then((value) => { if (!mounted) return; setIntroFirst(!value); setIntroReady(true); }).catch(() => mounted && setIntroReady(true)); return () => { mounted = false; }; }, []);
 
   const switchTab = (tab: TabId) => {
@@ -104,17 +107,18 @@ function MistakeApp() {
   if (!fontsLoaded || !introReady) return <LoadingScreen />;
   if (introFirst) return <IntroSplash onDone={() => { AsyncStorage.setItem(INTRO_KEY, 'seen').catch(() => undefined); setIntroFirst(false); }} />;
 
-  // A configured, signed-out build starts with account creation. If Supabase is
-  // unavailable, retain the local-first flow so the app never becomes unusable.
-  if (auth.status === 'loading') return <LoadingScreen />;
-  if (auth.passwordRecovery) {
+  const authGate = resolveAuthGate({ status: auth.status, hasAccount: Boolean(auth.account), passwordRecovery: auth.passwordRecovery });
+  if (authGate === 'loading') return <LoadingScreen />;
+  if (authGate === 'passwordRecovery') {
     return <SafeAreaView style={styles.safe}><StatusBar style={mode === 'dark' ? 'light' : 'dark'} /><AccountScreen onAccountDeleted={clearPersonalData} /></SafeAreaView>;
   }
-  if (auth.status === 'ready' && !auth.account) {
+  if (authGate === 'visitor') {
     return (
       <SafeAreaView style={styles.safe}>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-        <AccountScreen lockedToSignUp />
+        {authMode
+          ? <AccountScreen initialMode={authMode} onBack={() => setAuthMode(null)} />
+          : <WelcomeScreen onChooseMode={setAuthMode} />}
       </SafeAreaView>
     );
   }
@@ -158,6 +162,7 @@ function MistakeApp() {
             setActiveTab('home');
           }}
         />
+        {shouldShowTabBar('mistakeForm') && <TabBar active={activeTab} onChange={(tab) => { setShowMistakeForm(false); switchTab(tab); }} />}
       </SafeAreaView>
     );
   }
@@ -199,6 +204,8 @@ function MistakeApp() {
           <SettingsScreen
             onOpenPro={() => setShowPro(true)}
             onOpenAccount={() => { trackEvent('account_screen_viewed', { source: 'settings' }); setShowAccount(true); }}
+            onOpenPrepMap={() => switchTab('prepMap')}
+            onOpenExams={() => switchTab('exams')}
             onOpenLegal={setLegalDocument}
             onExportData={async () => {
               try {
@@ -219,7 +226,7 @@ function MistakeApp() {
           />
         )}
       </Animated.View>
-      {activeTab !== 'review' && <TabBar active={activeTab} onChange={switchTab} />}
+      {shouldShowTabBar('review') && <TabBar active={activeTab} onChange={switchTab} />}
     </SafeAreaView>
   );
 }
@@ -291,9 +298,10 @@ function AmbientField() {
 }
 
 const styles = createThemedStyles((colors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.canvas, userSelect: 'none' },
-  content: { flex: 1 },
-  ambientField: { pointerEvents: 'none' },
+  safe: { flex: 1, width: '100%', minWidth: 0, backgroundColor: colors.canvas, userSelect: 'none' },
+  content: { flex: 1, minWidth: 0, width: '100%' },
+  // Decorative circles deliberately extend beyond their frame, not the page.
+  ambientField: { pointerEvents: 'none', overflow: 'hidden' },
   loading: { flex: 1, backgroundColor: colors.canvas, alignItems: 'center', justifyContent: 'center', gap: 18 },
   loadingText: { color: colors.faint, fontFamily: type.monoBold, fontSize: 8, letterSpacing: 1.6 },
   ambientOne: { position: 'absolute', width: 460, height: 460, borderRadius: 260, borderWidth: 1, borderColor: colors.violet, opacity: 0.13, top: -260, right: -230 },

@@ -9,7 +9,7 @@ import { clearAuthFailures, mayAttemptAuth, recordAuthFailure } from './attemptG
 
 export type AuthStatus = 'loading' | 'ready' | 'unavailable';
 export type AuthAccount = { id: string; email: string | null; isAnonymous: boolean };
-export type AuthResult = 'signed_in' | 'confirmation_sent' | 'unavailable' | 'validation_error' | 'error';
+export type AuthResult = 'signed_in' | 'confirmation_sent' | 'email_in_use' | 'unavailable' | 'validation_error' | 'error';
 
 type AuthContextValue = {
   status: AuthStatus;
@@ -142,6 +142,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logAuthSubmit('ERROR', safeAuthErrorCode(error));
         trackEvent('account_signup_failed', { source: 'account_screen' });
         return { result: 'error', field: null };
+      }
+      // Supabase may return a non-identifiable user with no identities for an
+      // existing address when email confirmation is enabled. This is presented
+      // as a recovery-oriented message without exposing provider details.
+      if (data.user.identities && data.user.identities.length === 0) {
+        clearAuthFailures('signUp');
+        return { result: 'email_in_use', field: null };
       }
       clearAuthFailures('signUp');
       logAuthSubmit('SUCCESS');

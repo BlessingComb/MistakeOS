@@ -2,8 +2,10 @@ import { supabase } from '../supabase';
 import { classroomDemoEnabled } from '../features';
 import { demoClassroom, demoClassroomAssignments, demoClassroomSkillSummary } from './demo';
 import { normalizeClassroomInviteCode, type Classroom, type ClassroomAssignment, type ClassroomProgress, type ClassroomRole, type ClassroomRosterEntry, type ClassroomSkillSummary } from './core';
+export { classifyClassroomLoadFailure, isMissingClassroomSchema, type ClassroomLoadFailure } from './errors';
 
 const unavailable = new Error('CLASSROOMS_UNAVAILABLE');
+
 
 const rowToClassroom = (row: Record<string, unknown>): Classroom => ({
   id: String(row.id),
@@ -112,10 +114,4 @@ export async function createClassroomAssignment(input: { classroomId: string; sk
     p_classroom_id: input.classroomId, p_skill_code: input.skillCode, p_title: input.title.trim(),
   });
   if (error) throw error;
-}
-
-export function isMissingClassroomSchema(error: unknown) {
-  const value = error as { code?: string; message?: string };
-  const message = value?.message?.toLowerCase() ?? '';
-  return value?.code === '42P01' || value?.code === 'PGRST202' || message.includes('classroom') && (message.includes('does not exist') || message.includes('could not find'));
 }

@@ -43,7 +43,7 @@ export function PrimaryButton({ label, meta, onPress, disabled = false, tone = '
         <LinearGradient colors={gradient} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.gradient} />
         <View style={styles.labelRow}>
           {icon}
-          <View>
+          <View style={styles.copy}>
             <Text style={[styles.label, { color: foreground }]}>{label}</Text>
             {!!meta && <Text style={[styles.meta, { color: foreground }]}>{meta}</Text>}
           </View>
@@ -69,7 +69,8 @@ const styles = createThemedStyles((colors) => StyleSheet.create({
   },
   gradient: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   disabled: { opacity: 0.52 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  labelRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingRight: spacing.sm },
+  copy: { flex: 1, minWidth: 0 },
   label: { fontFamily: type.bold, fontSize: 16, letterSpacing: -0.35 },
   meta: { fontFamily: type.mono, fontSize: 10, opacity: 0.58, marginTop: 3, letterSpacing: 0.5 },
   iconWrap: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(7, 16, 25, 0.32)', backgroundColor: 'rgba(255,255,255,0.18)' },

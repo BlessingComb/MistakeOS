@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useTranslation } from '../i18n';
 import { colors, createThemedStyles, radius, spacing, type } from '../theme';
 
@@ -9,6 +9,7 @@ type Props = { active: TabId; onChange: (tab: TabId) => void };
 
 export function TabBar({ active, onChange }: Props) {
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
   const tabs: { id: TabId; label: string; icon: keyof typeof Feather.glyphMap }[] = [
     { id: 'home', label: t('nav.today'), icon: 'home' },
     { id: 'review', label: t('nav.review'), icon: 'file-text' },
@@ -28,10 +29,10 @@ export function TabBar({ active, onChange }: Props) {
               accessibilityLabel={tab.label}
               accessibilityState={{ selected }}
               onPress={() => onChange(tab.id)}
-              style={[styles.item, selected && styles.itemActive]}
+              style={[styles.item, selected && styles.itemActive, width < 480 && styles.itemCompact, selected && width >= 480 && { flex: 2 }]}
             >
               <Feather name={tab.icon} size={18} color={selected ? colors.onAccent : colors.darkMuted} />
-              {selected && <Text style={styles.label}>{tab.label}</Text>}
+              {selected && <Text style={[styles.label, width < 480 && styles.labelCompact]}>{tab.label}</Text>}
             </Pressable>
           );
         })}
@@ -48,6 +49,7 @@ const styles = createThemedStyles((colors) => StyleSheet.create({
     bottom: 0,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
+    ...(Platform.OS === 'web' ? { paddingBottom: 'max(12px, env(safe-area-inset-bottom))' as unknown as number } : {}),
     alignItems: 'center',
   },
   bar: {
@@ -65,14 +67,17 @@ const styles = createThemedStyles((colors) => StyleSheet.create({
   },
   item: {
     height: 52,
-    minWidth: 52,
+    flex: 1,
+    minWidth: 0,
     borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
   },
   itemActive: { backgroundColor: colors.signal },
+  itemCompact: { flexDirection: 'column', gap: 2 },
+  labelCompact: { fontSize: 9, textAlign: 'center', flexShrink: 1 },
   label: { color: colors.onAccent, fontFamily: type.bold, fontSize: 12 },
 }));

@@ -4,6 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { View } from 'react-native';
 import { activateTheme, palettes, type ThemeColors, type ThemeMode } from '../theme';
 import { normalizeTheme, THEME_STORAGE_KEY } from './core';
+import { setDocumentBackground } from '../webLayout';
 
 type ThemeContextValue = { colors: ThemeColors; mode: ThemeMode; setMode: (mode: ThemeMode) => Promise<void> };
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -12,6 +13,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>('dark');
   const [ready, setReady] = useState(false);
   activateTheme(mode);
+  useEffect(() => { setDocumentBackground(palettes[mode].canvas); }, [mode]);
 
   useEffect(() => {
     let mounted = true;

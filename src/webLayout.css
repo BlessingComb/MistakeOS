@@ -1,0 +1,8 @@
+/* The page canvas must match the app, including mobile browser safe areas. */
+html, body, #root {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  background-color: var(--mistakeos-canvas, #070A14);
+}
+#root { isolation: isolate; }
