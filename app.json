@@ -29,7 +29,7 @@
       "package": "com.mistakeos.mistakeos"
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/mistakeos-target-mark-square.png",
       "bundler": "metro"
     },
     "plugins": [
