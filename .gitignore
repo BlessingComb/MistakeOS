@@ -26,6 +26,8 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
 
 # macOS
 .DS_Store
@@ -35,7 +37,6 @@ yarn-error.*
 .env
 .env.*
 !.env.example
-.env*.local
 
 # typescript
 *.tsbuildinfo
@@ -44,7 +45,7 @@ yarn-error.*
 /ios
 /android
 
-.vercel
+.vercel/
 
 # local tooling and research artifacts
 .agents/
@@ -55,3 +56,5 @@ scripts/__pycache__/
 supabase/.temp/
 supabase/.branches/
 tmp/
+*.tmp
+*.temp
