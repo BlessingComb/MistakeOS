@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { buildOfficialExamReadiness } from './core';
-import { buildExamProgramItems, buildHomeExamPrepSummary, officialPrepView, summarizeSubjects } from './presentation';
+import { buildExamProgramItems, buildHomeExamPrepSummary, isPublicExamCatalog, officialPrepView, summarizeSubjects } from './presentation';
 import { emptyOfficialExamPrepData, type PublishedExamCatalog } from './repository';
 
 const catalog = (overrides: Partial<PublishedExamCatalog> = {}): PublishedExamCatalog => ({
@@ -17,24 +17,29 @@ test('repository requests only published catalogs and orders skills by display o
   assert.match(source, /\.order\('display_order', \{ ascending: true \}\)/);
 });
 
-test('draft-only programs remain visible but never become selectable catalogs', () => {
+test('other draft-only programs remain visible but never become selectable catalogs', () => {
   const programs = buildExamProgramItems([]);
-  assert.deepEqual(programs.map((item) => item.label), ['PSC 1', 'PSC 2', 'PSC 3', 'SIS 1', 'SIS 2', 'SIS 3', 'Vestibular UEA', 'ENEM']);
+  assert.deepEqual(programs.map((item) => item.label), ['PSC 1', 'PSC 3', 'SIS 1', 'SIS 2', 'SIS 3', 'Vestibular UEA', 'ENEM']);
   assert.ok(programs.every((item) => item.catalog === null));
 });
 
-test('only a catalog returned by the published-catalog repository becomes selectable', () => {
-  const programs = buildExamProgramItems([catalog()]);
-  assert.equal(programs.find((item) => item.id === 'psc-2')?.catalog?.id, 'psc-2');
+test('PSC 2 is hidden even when published, while another published catalog remains selectable', () => {
+  const other = catalog({ id: 'psc-1', stage: '1ª Etapa' });
+  const programs = buildExamProgramItems([catalog(), other]);
+  assert.equal(programs.some((item) => item.id === 'psc-2'), false);
+  assert.equal(programs.find((item) => item.id === 'psc-1')?.catalog?.id, 'psc-1');
   assert.equal(programs.find((item) => item.id === 'sis-2')?.catalog, null);
   assert.equal(programs.find((item) => item.id === 'uea-vestibular')?.catalog, null);
+  assert.equal(isPublicExamCatalog(catalog()), false);
+  assert.equal(isPublicExamCatalog(other), true);
 });
 
 test('loading, network error, empty target and valid target remain distinct', () => {
   assert.equal(officialPrepView(emptyOfficialExamPrepData('loading')), 'loading');
   assert.equal(officialPrepView(emptyOfficialExamPrepData('error')), 'error');
   assert.equal(officialPrepView(emptyOfficialExamPrepData('ready')), 'catalog-home');
-  assert.equal(officialPrepView({ ...emptyOfficialExamPrepData('ready'), catalogs: [catalog()], target: { id: 'target', catalogVersionId: 'psc-2' } }), 'target');
+  assert.equal(officialPrepView({ ...emptyOfficialExamPrepData('ready'), catalogs: [catalog()], target: { id: 'target', catalogVersionId: 'psc-2' } }), 'catalog-home');
+  assert.equal(officialPrepView({ ...emptyOfficialExamPrepData('ready'), catalogs: [catalog({ id: 'psc-1', stage: '1ª Etapa' })], target: { id: 'target', catalogVersionId: 'psc-1' } }), 'target');
 });
 
 test('subject summaries preserve display order and all four visible states', () => {
@@ -48,14 +53,19 @@ test('subject summaries preserve display order and all four visible states', () 
   assert.equal((subject?.counts.at_risk ?? 0) + (subject?.counts.critical ?? 0) + (subject?.counts.learning ?? 0), 1);
 });
 
-test('home differentiates no target from a real target with insufficient evidence', () => {
+test('home hides saved PSC 2 targets without deleting them or changing other targets', () => {
   const readiness = buildOfficialExamReadiness([{ code: 'one', subjectCode: 'math', name: 'One' }], [], [], []);
   assert.equal(buildHomeExamPrepSummary(emptyOfficialExamPrepData('ready'), readiness).kind, 'empty');
   const data = { ...emptyOfficialExamPrepData('ready'), catalogs: [catalog()], target: { id: 'target', catalogVersionId: 'psc-2' } };
-  const summary = buildHomeExamPrepSummary(data, readiness);
+  assert.equal(buildHomeExamPrepSummary(data, readiness).kind, 'empty');
+  assert.equal(data.target.catalogVersionId, 'psc-2');
+  const visibleData = { ...data, catalogs: [catalog({ id: 'psc-1', stage: '1ª Etapa' })], target: { id: 'target', catalogVersionId: 'psc-1' } };
+  const summary = buildHomeExamPrepSummary(visibleData, readiness);
   assert.equal(summary.kind, 'target');
   if (summary.kind === 'target') {
     assert.equal(summary.readiness, null);
     assert.equal(summary.assessedSkills, 0);
   }
+  const screen = readFileSync('src/screens/OfficialExamPrepExperience.tsx', 'utf8');
+  assert.match(screen, /catalog\.id === data\.target\?\.catalogVersionId && isPublicExamCatalog\(catalog\)/);
 });

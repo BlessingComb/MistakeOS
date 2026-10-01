@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BrandMark } from '../components/BrandMark';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { buildExamProgramItems, buildOfficialExamReadiness, officialPrepView, summarizeSubjects, type AssessedSkill, type OfficialExamPrepData, type PublishedExamCatalog, type SubjectSummary } from '../examPrep';
+import { buildExamProgramItems, buildOfficialExamReadiness, isPublicExamCatalog, officialPrepView, summarizeSubjects, type AssessedSkill, type OfficialExamPrepData, type PublishedExamCatalog, type SubjectSummary } from '../examPrep';
 import { useTranslation } from '../i18n';
 import { colors, createThemedStyles, radius, spacing, type } from '../theme';
 
@@ -23,7 +23,7 @@ export function OfficialExamPrepExperience({ data, onSelectCatalog, onRetry, onT
   const [selectionFailed, setSelectionFailed] = useState(false);
   const readiness = useMemo(() => buildOfficialExamReadiness(data.catalogSkills, data.mistakes, data.links, data.recoveries), [data]);
   const subjects = useMemo(() => summarizeSubjects(readiness), [readiness]);
-  const currentCatalog = data.target ? data.catalogs.find((catalog) => catalog.id === data.target?.catalogVersionId) ?? null : null;
+  const currentCatalog = data.target ? data.catalogs.find((catalog) => catalog.id === data.target?.catalogVersionId && isPublicExamCatalog(catalog)) ?? null : null;
   const state = officialPrepView(data);
 
   if (state === 'loading') return <PrepLoading />;
@@ -56,7 +56,7 @@ function ExamPrepHome({ data, selecting, selectionFailed, onSelect, onContinueTa
   const programs = buildExamProgramItems(data.catalogs);
   return <ScrollView style={styles.base} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}><View style={styles.screen}><ScreenHeader />
     {onContinueTarget && <Pressable accessibilityRole="button" onPress={onContinueTarget} style={({ pressed }) => [styles.resume, pressed && styles.pressed]}><View style={styles.resumeIcon}><Feather name="target" size={17} color={colors.onAccent} /></View><View style={styles.grow}><Text style={styles.resumeLabel}>{t('officialPrep.currentTarget')}</Text><Text style={styles.resumeTitle}>{t('officialPrep.continuePreparation')}</Text></View><Feather name="arrow-right" size={18} color={colors.signal} /></Pressable>}
-    <View style={styles.notice}><Feather name="shield" size={15} color={colors.signal} /><Text style={styles.noticeText}>{t(data.catalogs.length ? 'officialPrep.onlyPublished' : 'officialPrep.contentPreparing')}</Text></View>
+    <View style={styles.notice}><Feather name="shield" size={15} color={colors.signal} /><Text style={styles.noticeText}>{t(data.catalogs.some(isPublicExamCatalog) ? 'officialPrep.onlyPublished' : 'officialPrep.contentPreparing')}</Text></View>
     {selectionFailed && <View style={styles.selectionError}><Feather name="alert-circle" size={15} color={colors.risk} /><Text style={styles.selectionErrorText}>{t('officialPrep.selectionError')}</Text></View>}
     <ProgramGroup title={t('officialPrep.group.psc')} subtitle="UFAM" items={programs.filter((item) => item.group === 'psc')} selecting={selecting} onSelect={onSelect} />
     <ProgramGroup title={t('officialPrep.group.uea')} subtitle="UEA" items={programs.filter((item) => item.group === 'uea')} selecting={selecting} onSelect={onSelect} />

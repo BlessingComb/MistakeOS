@@ -11,11 +11,12 @@ test('home dashboard keeps the no-target state explicit', () => {
   assert.equal(buildHomeDashboard({ ...base, target: null }, readiness).target.kind, 'empty');
 });
 
-test('home dashboard exposes a real attention point only from assessed evidence', () => {
+test('home dashboard hides a saved PSC 2 target while preserving assessed evidence', () => {
   const mistakes = [{ id: 'm1', createdAt: '2026-09-11T12:00:00Z' }, { id: 'm2', createdAt: '2026-09-12T08:00:00Z' }];
   const links = mistakes.map((mistake) => ({ mistakeId: mistake.id, skillCode: skill.code, source: 'user' as const }));
   const readiness = buildOfficialExamReadiness([skill], mistakes, links, [], new Date('2026-09-12T12:00:00Z'));
   const dashboard = buildHomeDashboard({ ...base, target: { id: 'target', catalogVersionId: 'psc2' }, mistakes, links }, readiness);
+  assert.equal(dashboard.target.kind, 'empty');
   assert.equal(dashboard.focus?.code, skill.code);
   assert.equal(dashboard.counts.atRisk, 1);
 });

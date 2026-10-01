@@ -21,14 +21,22 @@ const PROGRAMS: Omit<ExamProgramItem, 'catalog'>[] = [
   { id: 'enem', group: 'national', label: 'ENEM', institution: 'INEP' },
 ];
 
+// Presentation-only: keep the catalog and any saved target, but hide PSC 2 in this release.
+const HIDDEN_PUBLIC_PROGRAM_IDS = new Set(['psc-2']);
+
+export function isPublicExamCatalog(catalog: PublishedExamCatalog): boolean {
+  return !PROGRAMS.some((item) => HIDDEN_PUBLIC_PROGRAM_IDS.has(item.id) && matchesProgram(item, catalog));
+}
+
 export function buildExamProgramItems(catalogs: readonly PublishedExamCatalog[]): ExamProgramItem[] {
-  return PROGRAMS.map((item) => ({ ...item, catalog: catalogs.find((catalog) => matchesProgram(item, catalog)) ?? null }));
+  return PROGRAMS.filter((item) => !HIDDEN_PUBLIC_PROGRAM_IDS.has(item.id))
+    .map((item) => ({ ...item, catalog: catalogs.find((catalog) => matchesProgram(item, catalog)) ?? null }));
 }
 
 export function officialPrepView(data: OfficialExamPrepData): 'loading' | 'error' | 'catalog-home' | 'target' {
   if (data.status === 'loading') return 'loading';
   if (data.status === 'error') return 'error';
-  return data.target && data.catalogs.some((catalog) => catalog.id === data.target?.catalogVersionId) ? 'target' : 'catalog-home';
+  return data.target && data.catalogs.some((catalog) => catalog.id === data.target?.catalogVersionId && isPublicExamCatalog(catalog)) ? 'target' : 'catalog-home';
 }
 
 export type SubjectSummary = {
@@ -55,7 +63,7 @@ export function summarizeSubjects(readiness: ExamReadiness): SubjectSummary[] {
 }
 
 export function buildHomeExamPrepSummary(data: OfficialExamPrepData, readiness: ExamReadiness) {
-  const catalog = data.target ? data.catalogs.find((item) => item.id === data.target?.catalogVersionId) ?? null : null;
+  const catalog = data.target ? data.catalogs.find((item) => item.id === data.target?.catalogVersionId && isPublicExamCatalog(item)) ?? null : null;
   if (!catalog) return { kind: 'empty' as const };
   return {
     kind: 'target' as const,
